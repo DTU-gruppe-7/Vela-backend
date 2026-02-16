@@ -85,4 +85,34 @@ To populate your database with initial recipe data:
 * `src/Vela.Domain` - Core entities.
 * * `src/Vela.Application` - DTOs, Interfaces and Services.
 
+---
+
+## Update in the database structure 
+OBS! Deletes the whole database!
+
+Always try to fix it by migrating (Step 4-5)
+
+# 1. Drop the database
+```bash
+dotnet ef database drop --force --project src/Vela.Infrastructure --startup-project src/Vela.API
 ```
+
+# 2. Stops and deletes the docker volume (-v is important!)
+```bash
+docker compose down -v
+```
+
+# 3. Starts the instans again
+```bash
+docker compose up -d
+```
+
+# 4. Make the migration
+```bash
+dotnet ef migrations add InitialCreate --project src/Vela.Infrastructure --startup-project src/Vela.API
+```
+# 5. Push it to the database
+```bash
+dotnet ef database update --project src/Vela.Infrastructure --startup-project src/Vela.API
+```
+Remember to load the recipes again
