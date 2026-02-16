@@ -1,4 +1,3 @@
-```markdown
 # 🌊 Vela
 
 Vela is a modern .NET API project. This guide will help you get your local development environment configured and running in minutes.
@@ -83,6 +82,7 @@ To populate your database with initial recipe data:
 
 * `src/Vela.API` - Entry point and Controllers.
 * `src/Vela.Infrastructure` - Database context, Migrations, and External services.
-* `src/Vela.Domain` - Core entities and logic.
+* `src/Vela.Domain` - Core entities.
+* * `src/Vela.Application` - DTOs, Interfaces and Services.
 
 ```
