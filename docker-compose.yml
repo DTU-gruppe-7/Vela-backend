@@ -1,0 +1,29 @@
+﻿services:
+  db:
+    # Vi bruger Postgres version 16 (eller 17) baseret på Debian 12 (Bookworm)
+    image: postgres:16-bookworm
+    container_name: local-dev-db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: Password
+      POSTGRES_DB: VelaDB
+    ports:
+      # Mapper port 5432 inde i Debian containeren til 5432 på din PC
+      - "5432:5432"
+    volumes:
+      # Dette sikrer at dine data gemmes lokalt på din PC, 
+      # så de ikke forsvinder, når du slukker containeren.
+      - ./postgres-data:/var/lib/postgresql/data
+
+  # (Valgfrit) En grafisk brugerflade til at se data i databasen
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
