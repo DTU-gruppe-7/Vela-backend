@@ -15,8 +15,16 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         
-        // Sammensat nøgle til RecipeIngredient (Mange-til-mange)
+        // RecipeIngredient bruger sit eget Id som PK
         modelBuilder.Entity<RecipeIngredient>()
-            .HasKey(ri => new { ri.RecipeId, ri.IngredientId });
+            .HasKey(ri => ri.Id);
+
+        // Index for hurtig opslag på Recipe + Ingredient
+        modelBuilder.Entity<RecipeIngredient>()
+            .HasIndex(ri => new { ri.RecipeId, ri.IngredientId });
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.Name)
+            .IsUnique();
     }
 }

@@ -10,16 +10,9 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     public RecipeRepository(AppDbContext context) : base(context)
     {}
 
-    public async Task<bool> ExistsByExternalIdAsync(string externalId)
+    public async Task<bool> ExistsByNameAsync(string name)
     {
         return await _dbSet
-            .AnyAsync(r => r.ExternalId == externalId);
-    }
-
-    public async Task<IEnumerable<Recipe>> GetByCategoryAsync(string category)
-    {
-        return await _dbSet
-            .Where(r => r.Category == category)
-            .ToListAsync();
+            .AnyAsync(r => r.Name.ToLower() == name.ToLower());
     }
 }

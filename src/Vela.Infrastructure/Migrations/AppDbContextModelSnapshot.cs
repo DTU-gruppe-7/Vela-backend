@@ -46,6 +46,9 @@ namespace Vela.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Ingredients");
                 });
 
@@ -56,23 +59,34 @@ namespace Vela.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Category")
-                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ExternalId")
-                        .IsRequired()
+                    b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<string>("Instructions")
-                        .IsRequired()
+                    b.Property<string>("InstructionsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("KeywordsJson")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("ServingSize")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("text");
+
                     b.Property<string>("ThumbnailUrl")
-                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TotalTime")
+                        .HasColumnType("text");
+
+                    b.Property<string>("WorkTime")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -82,7 +96,8 @@ namespace Vela.Infrastructure.Migrations
 
             modelBuilder.Entity("Vela.Domain.Entities.RecipeIngredient", b =>
                 {
-                    b.Property<Guid>("RecipeId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("IngredientId")
@@ -95,13 +110,21 @@ namespace Vela.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("RecipeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Section")
+                        .HasColumnType("text");
+
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("RecipeId", "IngredientId");
+                    b.HasKey("Id");
 
                     b.HasIndex("IngredientId");
+
+                    b.HasIndex("RecipeId", "IngredientId");
 
                     b.ToTable("RecipeIngredients");
                 });

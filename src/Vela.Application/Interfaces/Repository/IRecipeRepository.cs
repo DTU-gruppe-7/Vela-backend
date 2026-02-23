@@ -4,6 +4,5 @@ namespace Vela.Application.Interfaces.Repository;
 
 public interface IRecipeRepository : IRepository<Recipe>
 {
-    Task<bool> ExistsByExternalIdAsync(string externalId);
-    Task<IEnumerable<Recipe>> GetByCategoryAsync(string category);
+    Task<bool> ExistsByNameAsync(string name);
 }
