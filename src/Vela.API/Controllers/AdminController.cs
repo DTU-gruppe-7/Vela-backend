@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Vela.Application.Interfaces.External.MealDb;
+using Vela.Application.Interfaces.External;
 
 namespace Vela.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AdminController : ControllerBase
+public class adminController : ControllerBase
 {
-    private readonly IMealDbImportService _importService;
+    private readonly IRecipeImportService _importService;
 
-    public AdminController(IMealDbImportService importService)
+    public adminController(IRecipeImportService importService)
     {
         _importService = importService;
     }
@@ -17,8 +17,8 @@ public class AdminController : ControllerBase
     [HttpPost("import-all-meals")]
     public async Task<IActionResult> ImportAllMeals()
     {
-        await _importService.ImportAllRecipesAsync();
+        await _importService.ImportRecipesFromJsonAsync();
         
-        return Ok(new { message = "Import succeeded! All recipes A-Z have been imported." });
+        return Ok(new { message = "Import succeeded! All recipes from the JSON-file has been imported." });
     }
 }

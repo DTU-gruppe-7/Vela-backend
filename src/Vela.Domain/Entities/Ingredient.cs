@@ -3,7 +3,7 @@
 public class Ingredient
 {
     public Guid Id { get; set; }
-    public string Name { get; set; }
+    public required string Name { get; set; }
     
     public bool ContainsGluten { get; set; }
     public bool ContainsLactose { get; set; }

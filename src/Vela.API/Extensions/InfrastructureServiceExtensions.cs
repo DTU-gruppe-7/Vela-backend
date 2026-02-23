@@ -1,9 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
-using Vela.Application.Interfaces.External.MealDb;
+using Vela.Application.Interfaces.External;
+using Vela.Application.Interfaces.Service;
+using Vela.Application.Services;
 using Vela.Infrastructure.Data;
-using Vela.Infrastructure.External.MealDb;
 using Vela.Infrastructure.Repositories;
+using Vela.Infrastructure.External.RecipeImport;
 
 namespace Vela.API.Extensions;
 
@@ -19,11 +21,11 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IRecipeRepository, RecipeRepository>();
         services.AddScoped<IIngredientRepository, IngredientRepository>();
         
-        //External Services
-        services.AddHttpClient<IMealDbApiClient, MealDbApiClient>();
-        services.AddScoped<IMeasureParser, MeasureParser>();
-        services.AddScoped<IMealDbMapper, MealDbMapper>();
-        services.AddScoped<IMealDbImportService, MealDbImportService>();
+        //Services
+        services.AddScoped<IRecipeService, RecipeService>();
+        
+        // Import Service
+        services.AddScoped<IRecipeImportService, JsonRecipeImportService>();
         
         return services;
     }
