@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<Recipe> Recipes => Set<Recipe>();
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
     public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
+    public DbSet<SwipeRecipe> SwipeRecipes => Set<SwipeRecipe>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -25,6 +26,13 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Ingredient>()
             .HasIndex(i => i.Name)
+            .IsUnique();
+        
+        modelBuilder.Entity<SwipeRecipe>()
+            .HasKey(s => s.SwipeId);
+
+        modelBuilder.Entity<SwipeRecipe>()
+            .HasIndex(s => new { s.UserId,  s.RecipeId })
             .IsUnique();
     }
 }
