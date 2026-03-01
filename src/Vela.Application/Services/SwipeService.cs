@@ -35,7 +35,7 @@ public class SwipeService : ISwipeService
             UserId = userId,
             RecipeId = swipeDto.RecipeId,
             Direction = swipeDto.Direction,
-            SwipedAt = DateTime.UtcNow,
+            SwipedAt = DateTimeOffset.UtcNow,
         };
         await _swipeRepository.RecordSwipeAsync(swipe);
 

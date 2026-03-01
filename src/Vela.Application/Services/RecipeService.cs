@@ -2,7 +2,6 @@
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Domain.Entities;
-using RecipeSummaryDto = Vela.Application.DTOs.Recipe.RecipeSummaryDto;
 
 namespace Vela.Application.Services;
 

@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using System;
 
 namespace Vela.API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
     public abstract class BaseApiController : ControllerBase
     {
         protected Guid GetCurrentUserId()
