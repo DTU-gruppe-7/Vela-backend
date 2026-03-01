@@ -1,4 +1,4 @@
-﻿using Vela.Application.DTOs.Recipe;
+﻿using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Domain.Entities;
@@ -8,7 +8,7 @@ namespace Vela.Application.Services;
 public class RecipeService : IRecipeService
 {
     private readonly IRecipeRepository _recipeRepository;
-    
+
     public RecipeService(IRecipeRepository recipeRepository)
     {
         _recipeRepository = recipeRepository;
@@ -16,7 +16,7 @@ public class RecipeService : IRecipeService
 
     public async Task<IEnumerable<RecipeSummaryDto>> GetAllRecipesAsync()
     {
-        var recipes = await _recipeRepository.GetAllAsync();
+        var recipes = await _recipeRepository.GetAllSummariesAsync();
 
         return recipes.Select(r => new RecipeSummaryDto
         {
@@ -28,5 +28,15 @@ public class RecipeService : IRecipeService
             TotalTime = r.TotalTime,
             KeywordsJson = r.KeywordsJson,
         });
+    }
+
+    public async Task<Recipe?> GetRecipeByIdAsync(Guid recipeId)
+    {
+        return await _recipeRepository.GetByUuidAsync(recipeId);
+    }
+
+    public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit)
+    {
+        return await _recipeRepository.GetNextRecipesAsync(userId, limit);
     }
 }
