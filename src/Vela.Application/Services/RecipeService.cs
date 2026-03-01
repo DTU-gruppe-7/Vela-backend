@@ -9,13 +9,10 @@ namespace Vela.Application.Services;
 public class RecipeService : IRecipeService
 {
     private readonly IRecipeRepository _recipeRepository;
-    private readonly ISwipeRepository _swipeRepository;
 
-    public RecipeService(IRecipeRepository recipeRepository, ISwipeRepository swipeRepository)
+    public RecipeService(IRecipeRepository recipeRepository)
     {
         _recipeRepository = recipeRepository;
-        _swipeRepository = swipeRepository;
-
     }
 
     public async Task<IEnumerable<RecipeSummaryDto>> GetAllRecipesAsync()
@@ -42,28 +39,5 @@ public class RecipeService : IRecipeService
     public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit)
     {
         return await _recipeRepository.GetNextRecipesAsync(userId, limit);
-    }
-
-    public async Task RecordSwipeAsync(Guid userId, SwipeDto swipeDto)
-    {
-        var recipe = await _recipeRepository.GetByUuidAsync(swipeDto.RecipeId);
-        if (recipe == null)
-        {
-            throw new Exception("Recipe not found");
-        }
-
-        var alreadySwiped = await _swipeRepository.HasUserSwipedOnRecipeAsync(userId, swipeDto.RecipeId);
-        if (alreadySwiped)
-            return;
-
-        var swipe = new SwipeRecipe
-        {
-            SwipeId = Guid.NewGuid(),
-            UserId = userId,
-            RecipeId = swipeDto.RecipeId,
-            Direction = swipeDto.Direction,
-            SwipedAt = DateTime.UtcNow,
-        };
-        await _swipeRepository.RecordSwipeAsync(swipe);
     }
 }

@@ -23,7 +23,7 @@ public static class InfrastructureServiceExtensions
         
         //Services
         services.AddScoped<IRecipeService, RecipeService>();
-        
+        services.AddScoped<ISwipeService, SwipeService>();
         // Import Service
         services.AddScoped<IRecipeImportService, JsonRecipeImportService>();
         // Swipe Repository

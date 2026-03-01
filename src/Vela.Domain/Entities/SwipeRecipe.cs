@@ -1,6 +1,8 @@
 ﻿using Vela.Domain.Enums;
 
-namespace Vela.Domain.Entities;public class SwipeRecipe
+namespace Vela.Domain.Entities;
+
+public class SwipeRecipe
 {
  
     public Guid SwipeId { get; set; }
