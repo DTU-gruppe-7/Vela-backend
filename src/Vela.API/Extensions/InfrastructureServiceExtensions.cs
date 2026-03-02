@@ -20,9 +20,11 @@ public static class InfrastructureServiceExtensions
         //Repositories
         services.AddScoped<IRecipeRepository, RecipeRepository>();
         services.AddScoped<IIngredientRepository, IngredientRepository>();
+        services.AddScoped<IMealPlanRepository, MealPlanRepository>();
         
         //Services
         services.AddScoped<IRecipeService, RecipeService>();
+        services.AddScoped<IMealPlanService, MealPlanService>();
         
         // Import Service
         services.AddScoped<IRecipeImportService, JsonRecipeImportService>();

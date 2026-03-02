@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vela.Infrastructure.Data;
@@ -11,9 +12,11 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260225092318_InitialCreate2")]
+    partial class InitialCreate2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,67 +53,6 @@ namespace Vela.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Ingredients");
-                });
-
-            modelBuilder.Entity("Vela.Domain.Entities.MealPlan", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("MealPlans");
-                });
-
-            modelBuilder.Entity("Vela.Domain.Entities.MealPlanEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("AddedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Day")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("MealPlanId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("MealType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Servings")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MealPlanId");
-
-                    b.HasIndex("RecipeId");
-
-                    b.HasIndex("MealPlanId", "Day", "MealType");
-
-                    b.ToTable("MealPlanEntries");
                 });
 
             modelBuilder.Entity("Vela.Domain.Entities.Recipe", b =>
@@ -189,25 +131,6 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("RecipeIngredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.MealPlanEntry", b =>
-                {
-                    b.HasOne("Vela.Domain.Entities.MealPlan", "MealPlan")
-                        .WithMany("Entries")
-                        .HasForeignKey("MealPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Vela.Domain.Entities.Recipe", "Recipe")
-                        .WithMany()
-                        .HasForeignKey("RecipeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MealPlan");
-
-                    b.Navigation("Recipe");
-                });
-
             modelBuilder.Entity("Vela.Domain.Entities.RecipeIngredient", b =>
                 {
                     b.HasOne("Vela.Domain.Entities.Ingredient", "Ingredient")
@@ -225,11 +148,6 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Ingredient");
 
                     b.Navigation("Recipe");
-                });
-
-            modelBuilder.Entity("Vela.Domain.Entities.MealPlan", b =>
-                {
-                    b.Navigation("Entries");
                 });
 
             modelBuilder.Entity("Vela.Domain.Entities.Recipe", b =>
