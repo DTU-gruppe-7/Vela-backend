@@ -6,4 +6,8 @@ namespace Vela.Application.Interfaces.Service;
 public interface ISwipeService
 {
     Task<Result> RecordSwipeAsync(Guid userId, SwipeDto swipeDto);
+    
+    Task <IEnumerable<RecipeSummaryDto>> GetLikedRecipesByUserIdAsync(Guid userId);
 }
+
+

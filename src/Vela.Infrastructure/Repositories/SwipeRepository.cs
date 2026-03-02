@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities;
+using Vela.Domain.Enums;
 using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
@@ -21,5 +22,13 @@ public class SwipeRepository : ISwipeRepository
     {
         return await _context.Set<SwipeRecipe>()
             .AnyAsync(sr => sr.UserId == userId && sr.RecipeId == recipeId);
+    }
+    public async Task<IEnumerable<Recipe>> GetLikedRecipesByUserIdAsync(Guid userId)
+    {
+        return await _context.Set<SwipeRecipe>()
+            .Where(sr => sr.UserId == userId && sr.Direction == SwipeDirection.Like)
+            .Select(sr => sr.Recipe)
+            .Where(r => r != null) // Filter out null recipes, just in case
+            .ToListAsync();
     }
 }
