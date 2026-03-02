@@ -5,14 +5,9 @@ namespace Vela.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class adminController : ControllerBase
+public class AdminController(IRecipeImportService importService) : BaseApiController
 {
-    private readonly IRecipeImportService _importService;
-
-    public adminController(IRecipeImportService importService)
-    {
-        _importService = importService;
-    }
+    private readonly IRecipeImportService _importService = importService;
 
     [HttpPost("import-all-meals")]
     public async Task<IActionResult> ImportAllMeals()
