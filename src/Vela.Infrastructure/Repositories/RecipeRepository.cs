@@ -15,6 +15,14 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
         return await _dbSet.ToListAsync();
     }
+
+    public async Task<Recipe?> GetByIdWithIngredientsAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(r => r.Ingredients)
+            .ThenInclude(i => i.Ingredient)
+            .FirstOrDefaultAsync(r => r.Id == id);;
+    }
     
     public async Task<bool> ExistsByNameAsync(string name)
     {

@@ -7,4 +7,5 @@ public interface IRepository<T>
     Task<IEnumerable<T>> GetAllAsync();
     Task UpdateAsync(T entity);
     Task DeleteAsync(Guid uuid);
+    Task SaveChangesAsync();
 }

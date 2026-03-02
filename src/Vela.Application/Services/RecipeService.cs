@@ -5,15 +5,10 @@ using Vela.Domain.Entities;
 
 namespace Vela.Application.Services;
 
-public class RecipeService : IRecipeService
+public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
 {
-    private readonly IRecipeRepository _recipeRepository;
-
-    public RecipeService(IRecipeRepository recipeRepository)
-    {
-        _recipeRepository = recipeRepository;
-    }
-
+    private readonly IRecipeRepository _recipeRepository = recipeRepository;
+    
     public async Task<IEnumerable<RecipeSummaryDto>> GetAllRecipesAsync()
     {
         var recipes = await _recipeRepository.GetAllSummariesAsync();
@@ -30,13 +25,51 @@ public class RecipeService : IRecipeService
         });
     }
 
-    public async Task<Recipe?> GetRecipeByIdAsync(Guid recipeId)
+    public async Task<RecipeDto?> GetRecipeByIdAsync(Guid recipeId)
     {
-        return await _recipeRepository.GetByUuidAsync(recipeId);
+        var recipe = await _recipeRepository.GetByIdWithIngredientsAsync(recipeId);
+        
+        if (recipe == null)
+            return null;
+
+        return new RecipeDto
+        {
+            Id = recipe.Id,
+            Name = recipe.Name,
+            Category = recipe.Category,
+            ThumbnailUrl = recipe.ThumbnailUrl,
+            ServingSize = recipe.ServingSize,
+            TotalTime = recipe.TotalTime,
+            WorkTime = recipe.WorkTime,
+            InstructionsJson = recipe.InstructionsJson,
+            KeywordsJson = recipe.KeywordsJson,
+            Ingredients = recipe.Ingredients.Select(ri => new RecipeIngredientDto
+            {
+                Id = ri.Id,
+                IngredientId = ri.IngredientId,
+                IngredientName = ri.Ingredient.Name,
+                Quantity = ri.Quantity,
+                Unit = ri.Unit,
+                Section = ri.Section,
+            }).ToList()
+        };
     }
 
-    public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit)
+    public async Task<IEnumerable<RecipeSummaryDto>> GetNextRecipesAsync(Guid userId, int limit)
     {
-        return await _recipeRepository.GetNextRecipesAsync(userId, limit);
+        var recipes = await _recipeRepository.GetNextRecipesAsync(userId, limit);
+
+        return recipes.Select(r => new RecipeSummaryDto
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Category = r.Category,
+                ThumbnailUrl = r.ThumbnailUrl,
+                WorkTime = r.WorkTime,
+                TotalTime = r.TotalTime,
+                KeywordsJson = r.KeywordsJson
+            }
+        )
+        .ToList();
     }
 }

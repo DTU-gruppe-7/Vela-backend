@@ -7,14 +7,9 @@ namespace Vela.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class SwipeController : BaseApiController
+    public class SwipeController(ISwipeService swipeService) : BaseApiController
     {
-        private readonly ISwipeService _swipeService;
-
-        public SwipeController(ISwipeService swipeService)
-        {
-            _swipeService = swipeService;
-        }
+        private readonly ISwipeService _swipeService = swipeService;
 
         [HttpPost]
         public async Task<IActionResult> RecordSwipe([FromBody] SwipeDto swipeDto)
