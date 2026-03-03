@@ -24,5 +24,14 @@ namespace Vela.API.Controllers
 
             return Ok();
         }
+
+        [HttpGet("liked")]
+
+        public async Task<IActionResult> GetLikedRecipesByUserIdAsync()
+        {
+            var userId = GetCurrentUserId();
+            var likedRecipes = await _swipeService.GetLikedRecipesByUserIdAsync(userId);
+            return Ok(likedRecipes);
+        }
     }
 }

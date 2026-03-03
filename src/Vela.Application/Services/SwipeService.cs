@@ -41,4 +41,19 @@ public class SwipeService : ISwipeService
 
         return Result.Ok();
     }
+    
+    public async Task<IEnumerable<RecipeSummaryDto>> GetLikedRecipesByUserIdAsync(Guid userId)
+    {
+        var likedRecipes = await _swipeRepository.GetLikedRecipesByUserIdAsync(userId);
+        return likedRecipes.Select(r => new RecipeSummaryDto
+        {
+            Id = r.Id,
+            Name = r.Name,
+            Category = r.Category,
+            ThumbnailUrl = r.ThumbnailUrl,
+            WorkTime = r.WorkTime,
+            TotalTime = r.TotalTime,
+            KeywordsJson = r.KeywordsJson,
+        });
+    }
 }
