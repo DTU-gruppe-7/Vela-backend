@@ -5,12 +5,26 @@ public class Result
     public bool Success { get; }
     public string? ErrorMessage { get; }
 
-    private Result(bool success, string? errorMessage)
+    protected Result(bool success, string? errorMessage)
     {
         Success = success;
         ErrorMessage = errorMessage;
     }
 
-    public static Result Ok() => new Result(true, null);
-    public static Result Fail(string errorMessage) => new Result(false, errorMessage);
+    public static Result Ok() => new(true, null);
+    public static Result Fail(string errorMessage) => new(false, errorMessage);
+}
+
+public class Result<T> : Result
+{
+    public T? Data { get; }
+
+    private Result(bool success, T? data, string? errorMessage)
+        : base(success, errorMessage)
+    {
+        Data = data;
+    }
+
+    public static Result<T> Ok(T data) => new(true, data, null);
+    public new static Result<T> Fail(string errorMessage) => new(false, default, errorMessage);
 }

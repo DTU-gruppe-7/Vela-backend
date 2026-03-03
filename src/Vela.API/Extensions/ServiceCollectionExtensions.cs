@@ -16,6 +16,20 @@ public static class ServiceCollectionExtensions
         services.AddSwaggerGen();
         services.AddOpenApi();
         
+        services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy
+                    .WithOrigins(
+                        "http://localhost:3000",    // React dev
+                        "http://localhost:5173"     // Vite dev
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+        
         return services;
     }
 }

@@ -13,16 +13,7 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
     {
         var recipes = await _recipeRepository.GetAllSummariesAsync();
 
-        return recipes.Select(r => new RecipeSummaryDto
-        {
-            Id = r.Id,
-            Name = r.Name,
-            Category = r.Category,
-            ThumbnailUrl = r.ThumbnailUrl,
-            WorkTime = r.WorkTime,
-            TotalTime = r.TotalTime,
-            KeywordsJson = r.KeywordsJson,
-        });
+        return recipes.Select(r => FromEntity(r)).ToList();
     }
 
     public async Task<RecipeDto?> GetRecipeByIdAsync(Guid recipeId)
@@ -59,17 +50,18 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
     {
         var recipes = await _recipeRepository.GetNextRecipesAsync(userId, limit);
 
-        return recipes.Select(r => new RecipeSummaryDto
-            {
-                Id = r.Id,
-                Name = r.Name,
-                Category = r.Category,
-                ThumbnailUrl = r.ThumbnailUrl,
-                WorkTime = r.WorkTime,
-                TotalTime = r.TotalTime,
-                KeywordsJson = r.KeywordsJson
-            }
-        )
+        return recipes.Select(r => FromEntity(r))
         .ToList();
     }
+    
+    private static RecipeSummaryDto FromEntity(Recipe r) => new()
+    {
+        Id = r.Id,
+        Name = r.Name,
+        Category = r.Category,
+        ThumbnailUrl = r.ThumbnailUrl,
+        WorkTime = r.WorkTime,
+        TotalTime = r.TotalTime,
+        KeywordsJson = r.KeywordsJson
+    };
 }

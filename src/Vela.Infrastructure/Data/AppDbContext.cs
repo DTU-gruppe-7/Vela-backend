@@ -13,6 +13,8 @@ public class AppDbContext : DbContext
     public DbSet<SwipeRecipe> SwipeRecipes => Set<SwipeRecipe>();
     public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
     public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
+    public DbSet<MealPlan> MealPlans => Set<MealPlan>();
+    public DbSet<MealPlanEntry> MealPlanEntries => Set<MealPlanEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,5 +55,28 @@ public class AppDbContext : DbContext
             .HasOne(si => si.Ingredient)
             .WithMany()
             .HasForeignKey(si => si.IngredientId);
+
+        // MealPlanEntry configuration
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasKey(mpe => mpe.Id);
+
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasOne(mpe => mpe.MealPlan)
+            .WithMany(mp => mp.Entries)
+            .HasForeignKey(mpe => mpe.MealPlanId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasOne(mpe => mpe.Recipe)
+            .WithMany()
+            .HasForeignKey(mpe => mpe.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Index for hurtig opslag
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasIndex(mpe => mpe.MealPlanId);
+
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasIndex(mpe => new { mpe.MealPlanId, mpe.Day, mpe.MealType });
     }
 }

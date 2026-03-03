@@ -13,7 +13,19 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
     public async Task<IEnumerable<Recipe>> GetAllSummariesAsync()
     {
-        return await _dbSet.ToListAsync();
+        return await _dbSet
+            .Select(r => new Recipe
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Category = r.Category,
+                ThumbnailUrl = r.ThumbnailUrl,
+                WorkTime = r.WorkTime,
+                TotalTime = r.TotalTime,
+                KeywordsJson = r.KeywordsJson
+            })
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     public async Task<Recipe?> GetByIdWithIngredientsAsync(Guid id)
@@ -21,7 +33,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return await _dbSet
             .Include(r => r.Ingredients)
             .ThenInclude(i => i.Ingredient)
-            .FirstOrDefaultAsync(r => r.Id == id);;
+            .FirstOrDefaultAsync(r => r.Id == id);
     }
     
     public async Task<bool> ExistsByNameAsync(string name)
@@ -35,7 +47,18 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return await _dbSet
             .Where(r => !_context.Set<SwipeRecipe>().Any(sr => sr.RecipeId == r.Id && sr.UserId == userId))
             .OrderBy(r => r.Id)
-            .Take(limit) // Limit sikrer, at vi kun henter f.eks. 20 ad gangen, hvilket sparer massive mængder hukommelse.
+            .Select(r => new Recipe
+            {
+                Id = r.Id,
+                Name = r.Name,
+                Category = r.Category,
+                ThumbnailUrl = r.ThumbnailUrl,
+                WorkTime = r.WorkTime,
+                TotalTime = r.TotalTime,
+                KeywordsJson = r.KeywordsJson
+            })
+            .AsNoTracking()
+            .Take(limit)
             .ToListAsync();
     }
 }
