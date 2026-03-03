@@ -1,5 +1,6 @@
-﻿using Vela.Application.DTOs.MealPlan;
-using Vela.Application.DTOs.Recipe;
+﻿using Vela.Application.Common;
+using Vela.Application.DTOs.MealPlan;
+using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Domain.Entities;
@@ -17,21 +18,23 @@ public class MealPlanService : IMealPlanService
         _recipeRepository = recipeRepository;
     }
 
-    public async Task<MealPlanDto?> GetMealPlanAsync(Guid mealPlanId)
+    public async Task<Result<MealPlanDto>> GetMealPlanAsync(Guid mealPlanId)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
-        if (mealPlan == null) return null;
+        if (mealPlan == null)
+            return Result<MealPlanDto>.Fail($"Meal plan with ID {mealPlanId} not found");
 
-        return MapToDto(mealPlan, new List<MealPlanEntry>());
+        return Result<MealPlanDto>.Ok(MapToDto(mealPlan, new List<MealPlanEntry>()));
     }
 
-    public async Task<IEnumerable<MealPlanDto>> GetAllMealPlansAsync()
+    public async Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansAsync()
     {
         var mealPlans = await _mealPlanRepository.GetAllAsync();
-        return mealPlans.Select(mp => MapToDto(mp, mp.Entries)).ToList();
+        var dtos = mealPlans.Select(mp => MapToDto(mp, mp.Entries)).ToList();
+        return Result<IEnumerable<MealPlanDto>>.Ok(dtos);
     }
 
-    public async Task<MealPlanDto> CreateMealPlanAsync(string name, string? description = null)
+    public async Task<Result<MealPlanDto>> CreateMealPlanAsync(string name, string? description = null)
     {
         var mealPlan = new MealPlan
         {
@@ -43,40 +46,42 @@ public class MealPlanService : IMealPlanService
         };
 
         await _mealPlanRepository.AddAsync(mealPlan);
-        return MapToDto(mealPlan, new List<MealPlanEntry>());
+        return Result<MealPlanDto>.Ok(MapToDto(mealPlan, new List<MealPlanEntry>()));
     }
 
-    public async Task UpdateMealPlanAsync(Guid mealPlanId, string name, string? description)
+    public async Task<Result> UpdateMealPlanAsync(Guid mealPlanId, string name, string? description)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            throw new KeyNotFoundException($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
 
         mealPlan.Name = name;
         mealPlan.Description = description;
         mealPlan.UpdatedAt = DateTime.UtcNow;
 
         await _mealPlanRepository.UpdateAsync(mealPlan);
+        return Result.Ok();
     }
 
-    public async Task DeleteMealPlanAsync(Guid mealPlanId)
+    public async Task<Result> DeleteMealPlanAsync(Guid mealPlanId)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            throw new KeyNotFoundException($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
 
         await _mealPlanRepository.DeleteAsync(mealPlanId);
+        return Result.Ok();
     }
 
-    public async Task<MealPlanEntryDto> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request)
+    public async Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            throw new KeyNotFoundException($"Meal plan with ID {mealPlanId} not found");
+            return Result<MealPlanEntryDto>.Fail($"Meal plan with ID {mealPlanId} not found");
 
         var recipe = await _recipeRepository.GetByUuidAsync(request.RecipeId);
         if (recipe == null)
-            throw new KeyNotFoundException($"Recipe with ID {request.RecipeId} not found");
+            return Result<MealPlanEntryDto>.Fail($"Recipe with ID {request.RecipeId} not found");
 
         var entry = new MealPlanEntry
         {
@@ -92,28 +97,29 @@ public class MealPlanService : IMealPlanService
         };
 
         await _mealPlanRepository.AddEntryAsync(entry);
-
-        return MapEntryToDto(entry);
+        return Result<MealPlanEntryDto>.Ok(MapEntryToDto(entry));
     }
 
-    public async Task RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId)
+    public async Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId)
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
-            throw new KeyNotFoundException($"Meal plan entry with ID {entryId} not found");
+            return Result.Fail($"Meal plan entry with ID {entryId} not found");
 
         if (entry.MealPlanId != mealPlanId)
-            throw new InvalidOperationException("Entry does not belong to this meal plan");
+            return Result.Fail("Entry does not belong to this meal plan");
 
         await _mealPlanRepository.RemoveEntryAsync(entryId);
+        return Result.Ok();
     }
 
-    public async Task<MealPlanDto?> GetMealPlanWithEntriesAsync(Guid mealPlanId)
+    public async Task<Result<MealPlanDto>> GetMealPlanWithEntriesAsync(Guid mealPlanId)
     {
         var mealPlan = await _mealPlanRepository.GetMealPlanWithEntriesAsync(mealPlanId);
-        if (mealPlan == null) return null;
+        if (mealPlan == null)
+            return Result<MealPlanDto>.Fail($"Meal plan with ID {mealPlanId} not found");
 
-        return MapToDto(mealPlan, mealPlan.Entries);
+        return Result<MealPlanDto>.Ok(MapToDto(mealPlan, mealPlan.Entries));
     }
 
     private MealPlanDto MapToDto(MealPlan mealPlan, List<MealPlanEntry> entries)

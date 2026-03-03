@@ -6,8 +6,8 @@ builder.Services
     .AddPresentation()
     .AddInfrastructure(builder.Configuration);
     
-    var app = builder.Build();
+var app = builder.Build();
     
-    app.ConfigurePipeline();
+app.ConfigurePipeline();
     
-    app.Run();
+app.Run();

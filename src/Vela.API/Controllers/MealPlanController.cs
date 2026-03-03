@@ -6,113 +6,72 @@ namespace Vela.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MealPlanController : ControllerBase
+public class MealPlanController(IMealPlanService mealPlanService) : BaseApiController
 {
-    private readonly IMealPlanService _mealPlanService;
-
-    public MealPlanController(IMealPlanService mealPlanService)
-    {
-        _mealPlanService = mealPlanService;
-    }
+    private readonly IMealPlanService _mealPlanService = mealPlanService;
 
     [HttpGet]
     public async Task<IActionResult> GetAllMealPlans()
     {
-        var mealPlans = await _mealPlanService.GetAllMealPlansAsync();
-        return Ok(mealPlans);
+        var result = await _mealPlanService.GetAllMealPlansAsync();
+        return Ok(result.Data);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetMealPlan(Guid id)
     {
-        var mealPlan = await _mealPlanService.GetMealPlanWithEntriesAsync(id);
-        if (mealPlan == null)
-            return NotFound(new { message = $"Meal plan with ID {id} not found" });
+        var result = await _mealPlanService.GetMealPlanWithEntriesAsync(id);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
 
-        return Ok(mealPlan);
+        return Ok(result.Data);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateMealPlan([FromBody] CreateMealPlanRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Name))
-            return BadRequest(new { message = "Meal plan name is required" });
-
-        var mealPlan = await _mealPlanService.CreateMealPlanAsync(request.Name, request.Description);
-        return CreatedAtAction(nameof(GetMealPlan), new { id = mealPlan.Id }, mealPlan);
+        var result = await _mealPlanService.CreateMealPlanAsync(request.Name, request.Description);
+        return CreatedAtAction(nameof(GetMealPlan), new { id = result.Data!.Id }, result.Data);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateMealPlan(Guid id, [FromBody] UpdateMealPlanRequest request)
     {
-        try
-        {
-            await _mealPlanService.UpdateMealPlanAsync(id, request.Name, request.Description);
-            var updated = await _mealPlanService.GetMealPlanWithEntriesAsync(id);
-            return Ok(updated);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { message = $"Meal plan with ID {id} not found" });
-        }
+        var updateResult = await _mealPlanService.UpdateMealPlanAsync(id, request.Name, request.Description);
+        if (!updateResult.Success)
+            return NotFound(new { message = updateResult.ErrorMessage });
+
+        var getResult = await _mealPlanService.GetMealPlanWithEntriesAsync(id);
+        return Ok(getResult.Data);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMealPlan(Guid id)
     {
-        try
-        {
-            await _mealPlanService.DeleteMealPlanAsync(id);
-            return Ok(new { message = "Meal plan deleted successfully" });
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new { message = $"Meal plan with ID {id} not found" });
-        }
+        var result = await _mealPlanService.DeleteMealPlanAsync(id);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Meal plan deleted successfully" });
     }
 
     [HttpPost("{mealPlanId}/entries")]
     public async Task<IActionResult> AddRecipeToMealPlan(Guid mealPlanId, [FromBody] AddMealPlanEntryRequest request)
     {
-        try
-        {
-            var entry = await _mealPlanService.AddRecipeToMealPlanAsync(mealPlanId, request);
-            return CreatedAtAction(nameof(GetMealPlan), new { id = mealPlanId }, entry);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
+        var result = await _mealPlanService.AddRecipeToMealPlanAsync(mealPlanId, request);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return CreatedAtAction(nameof(GetMealPlan), new { id = mealPlanId }, result.Data);
     }
 
     [HttpDelete("{mealPlanId}/entries/{entryId}")]
     public async Task<IActionResult> RemoveRecipeFromMealPlan(Guid mealPlanId, Guid entryId)
     {
-        try
-        {
-            await _mealPlanService.RemoveRecipeFromMealPlanAsync(mealPlanId, entryId);
-            return Ok(new { message = "Recipe removed from meal plan successfully" });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        var result = await _mealPlanService.RemoveRecipeFromMealPlanAsync(mealPlanId, entryId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Recipe removed from meal plan successfully" });
     }
-}
-
-// Request DTOs for controller
-public class CreateMealPlanRequest
-{
-    public required string Name { get; set; }
-    public string? Description { get; set; }
-}
-
-public class UpdateMealPlanRequest
-{
-    public required string Name { get; set; }
-    public string? Description { get; set; }
 }

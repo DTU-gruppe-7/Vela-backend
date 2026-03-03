@@ -1,6 +1,4 @@
-﻿using Vela.Application.DTOs.Recipe;
-
-namespace Vela.Application.DTOs.MealPlan;
+﻿namespace Vela.Application.DTOs.MealPlan;
 
 public class MealPlanEntryDto
 {

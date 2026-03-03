@@ -1,20 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using Vela.Application.Interfaces.External;
+using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers
 {
 	[ApiController]
 	[Route("api/[controller]")]
-    public class RecipeController : ControllerBase
+	public class RecipeController(IRecipeService recipeService) : BaseApiController
 	{
-		private readonly IRecipeService _recipeService;
-
-		public RecipeController(IRecipeService recipeService) 
-		{
-			_recipeService = recipeService;
-		}
+		private readonly IRecipeService _recipeService =  recipeService;
 
 		[HttpGet]
 		public async Task<IActionResult> GetAll()
@@ -22,5 +16,23 @@ namespace Vela.API.Controllers
 			var recipes = await _recipeService.GetAllRecipesAsync();
 			return Ok(recipes);
 		}
-	}
+
+
+		[HttpGet("{id}")]
+		public async Task<ActionResult<RecipeDto>> GetRecipeById(Guid id)
+		{
+			var recipe = await _recipeService.GetRecipeByIdAsync(id);
+			if (recipe == null)
+				return NotFound();
+			return Ok(recipe);
+		}
+
+		[HttpGet("next")]
+		public async Task<ActionResult<IEnumerable<RecipeSummaryDto>>> GetNextRecipes([FromQuery] int limit = 20)
+		{
+			var userid = GetCurrentUserId();
+			var recipes = await _recipeService.GetNextRecipesAsync(userid, limit);
+			return Ok(recipes);
+		}
+	}	
 }

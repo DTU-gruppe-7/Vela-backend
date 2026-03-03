@@ -1,15 +1,16 @@
-﻿using Vela.Application.DTOs.MealPlan;
+﻿using Vela.Application.Common;
+using Vela.Application.DTOs.MealPlan;
 
 namespace Vela.Application.Interfaces.Service;
 
 public interface IMealPlanService
 {
-    Task<MealPlanDto?> GetMealPlanAsync(Guid mealPlanId);
-    Task<IEnumerable<MealPlanDto>> GetAllMealPlansAsync();
-    Task<MealPlanDto> CreateMealPlanAsync(string name, string? description = null);
-    Task UpdateMealPlanAsync(Guid mealPlanId, string name, string? description);
-    Task DeleteMealPlanAsync(Guid mealPlanId);
-    Task<MealPlanEntryDto> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request);
-    Task RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId);
-    Task<MealPlanDto?> GetMealPlanWithEntriesAsync(Guid mealPlanId);
+    Task<Result<MealPlanDto>> GetMealPlanAsync(Guid mealPlanId);
+    Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansAsync();
+    Task<Result<MealPlanDto>> CreateMealPlanAsync(string name, string? description = null);
+    Task<Result> UpdateMealPlanAsync(Guid mealPlanId, string name, string? description);
+    Task<Result> DeleteMealPlanAsync(Guid mealPlanId);
+    Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request);
+    Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId);
+    Task<Result<MealPlanDto>> GetMealPlanWithEntriesAsync(Guid mealPlanId);
 }
