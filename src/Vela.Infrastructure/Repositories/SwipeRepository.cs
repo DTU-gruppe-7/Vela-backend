@@ -28,7 +28,6 @@ public class SwipeRepository : ISwipeRepository
         return await _context.Set<SwipeRecipe>()
             .Where(sr => sr.UserId == userId && sr.Direction == SwipeDirection.Like)
             .Select(sr => sr.Recipe)
-            .Where(r => r != null) // Filter out null recipes, just in case
             .ToListAsync();
     }
 }
