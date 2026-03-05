@@ -8,7 +8,7 @@ namespace Vela.API.Controllers
 	[Route("api/[controller]")]
 	public class RecipeController(IRecipeService recipeService) : BaseApiController
 	{
-		private readonly IRecipeService _recipeService =  recipeService;
+		private readonly IRecipeService _recipeService = recipeService;
 
 		[HttpGet]
 		public async Task<IActionResult> GetAll()
@@ -28,11 +28,20 @@ namespace Vela.API.Controllers
 		}
 
 		[HttpGet("next")]
-		public async Task<ActionResult<IEnumerable<RecipeSummaryDto>>> GetNextRecipes([FromQuery] int limit = 20)
+		public async Task<ActionResult<IEnumerable<RecipeSummaryDto>>> GetNextRecipes(
+			[FromQuery] int limit = 20,
+			[FromQuery] string? category = null)
 		{
 			var userid = GetCurrentUserId();
-			var recipes = await _recipeService.GetNextRecipesAsync(userid, limit);
+			var recipes = await _recipeService.GetNextRecipesAsync(userid, limit, category);
 			return Ok(recipes);
 		}
-	}	
+
+		[HttpGet("categories")]
+		public async Task<ActionResult<IEnumerable<string>>> GetCategories()
+		{
+			var categories = await _recipeService.GetCategoriesAsync();
+			return Ok(categories);
+		}
+	}
 }

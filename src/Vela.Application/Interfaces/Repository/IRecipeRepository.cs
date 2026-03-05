@@ -7,5 +7,6 @@ public interface IRecipeRepository : IRepository<Recipe>
     Task<bool> ExistsByNameAsync(string name);
     Task<Recipe?> GetByIdWithIngredientsAsync(Guid id);
     Task<IEnumerable<Recipe>> GetAllSummariesAsync();
-    Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit);
+    Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit, string? category = null);
+    Task<IEnumerable<string>> GetCategoriesAsync();
 }
