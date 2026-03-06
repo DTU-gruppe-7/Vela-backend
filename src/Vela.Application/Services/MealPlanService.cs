@@ -7,16 +7,10 @@ using Vela.Domain.Entities;
 
 namespace Vela.Application.Services;
 
-public class MealPlanService : IMealPlanService
+public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepository recipeRepository) : IMealPlanService
 {
-    private readonly IMealPlanRepository _mealPlanRepository;
-    private readonly IRecipeRepository _recipeRepository;
-
-    public MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepository recipeRepository)
-    {
-        _mealPlanRepository = mealPlanRepository;
-        _recipeRepository = recipeRepository;
-    }
+    private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
+    private readonly IRecipeRepository _recipeRepository  = recipeRepository;
 
     public async Task<Result<MealPlanDto>> GetMealPlanAsync(Guid mealPlanId)
     {
@@ -41,8 +35,8 @@ public class MealPlanService : IMealPlanService
             Id = Guid.NewGuid(),
             Name = name,
             Description = description,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
         };
 
         await _mealPlanRepository.AddAsync(mealPlan);
@@ -57,7 +51,7 @@ public class MealPlanService : IMealPlanService
 
         mealPlan.Name = name;
         mealPlan.Description = description;
-        mealPlan.UpdatedAt = DateTime.UtcNow;
+        mealPlan.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _mealPlanRepository.UpdateAsync(mealPlan);
         return Result.Ok();
@@ -93,7 +87,7 @@ public class MealPlanService : IMealPlanService
             Day = request.Day,
             MealType = request.MealType,
             Servings = request.Servings,
-            AddedAt = DateTime.UtcNow
+            AddedAt = DateTimeOffset.UtcNow
         };
 
         await _mealPlanRepository.AddEntryAsync(entry);

@@ -7,5 +7,5 @@ public interface IRecipeService
 {
     Task<IEnumerable<RecipeSummaryDto>> GetAllRecipesAsync();
     Task<RecipeDto?> GetRecipeByIdAsync(Guid recipeId);
-    Task<IEnumerable<RecipeSummaryDto>> GetNextRecipesAsync(Guid userId, int limit);
+    Task<IEnumerable<RecipeSummaryDto>> GetNextRecipesAsync(string userId, int limit);
 }

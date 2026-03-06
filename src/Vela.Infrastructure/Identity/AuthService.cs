@@ -69,7 +69,7 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
         var user = await _userManager.FindByEmailAsync(email);
 
         // Tjek at refresh token matcher og ikke er udløbet
-        if (user == null || user.RefreshToken != requestDto.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        if (user == null || user.RefreshToken != requestDto.RefreshToken || user.RefreshTokenExpiryTime <= DateTimeOffset.UtcNow)
         {
             return Result<AuthResponseDto>.Fail("Invalid or  expired token. Please login again.");
         }
@@ -80,7 +80,30 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
 
     public async Task<Result<bool>> LogoutAsync(string userId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return Result<bool>.Fail("User not found");
+            
+            user.RefreshToken = null;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow;
+            
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Result<bool>.Fail($"Could not logout user: {errors}");
+            }
+            
+            return Result<bool>.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Fail($"An error occurred during logout: {ex.Message}");
+        }
     }
 
     private async Task<Result<AuthResponseDto>> GenerateUserTokenAsync(AppUser user)

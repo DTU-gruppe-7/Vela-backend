@@ -7,6 +7,6 @@ public interface IShoppingListService
 {
    Task<IEnumerable<ShoppingListSummaryDto>> GetAllShoppingListsAsync();
    Task<ShoppingListDto?> GetShoppingListById(Guid id);
-   Task<ShoppingListDto> CreateShoppingListAsync(Guid userId, CreateShoppingListDto dto);
+   Task<ShoppingListDto> CreateShoppingListAsync(string userId, CreateShoppingListDto dto);
    Task<Result> MarkItemAsBoughtAsync(Guid itemId);
 }

@@ -56,7 +56,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository)
         };
     }
 
-    public async Task<ShoppingListDto> CreateShoppingListAsync(Guid userId, CreateShoppingListDto dto)
+    public async Task<ShoppingListDto> CreateShoppingListAsync(string userId, CreateShoppingListDto dto)
     {
         var shoppingList = new ShoppingList
         {

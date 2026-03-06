@@ -1,15 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Vela.API.Controllers
 {
     public abstract class BaseApiController : ControllerBase
     {
-        protected Guid GetCurrentUserId()
+        protected string GetCurrentUserId()
         {
-            // In a real application, you would extract the user ID from the JWT token or session.
-            // For example: User.FindFirstValue(ClaimTypes.NameIdentifier)
-            // For this example, we'll just return a fixed GUID for testing purposes.
-            return Guid.Parse("00000000-0000-0000-0000-000000000001");
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedAccessException("User ID not found in token");
+            }
+            
+            return userId;
+        }
+        
+        protected string? GetCurrentUserEmail()
+        {
+            return User.FindFirstValue(ClaimTypes.Email);
         }
     }
 }

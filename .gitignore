@@ -5,6 +5,7 @@
 
 # dotenv files
 .env
+.env.local
 
 # User-specific files
 *.rsuser
@@ -485,3 +486,6 @@ $RECYCLE.BIN/
 postgres-data/
 pgdata/
 .tmp/db/
+
+appsettings.Development.json
+secrets.json

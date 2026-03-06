@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using System;
+using Microsoft.AspNetCore.Authorization;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class SwipeController(ISwipeService swipeService) : BaseApiController

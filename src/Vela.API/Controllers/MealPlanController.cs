@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class MealPlanController(IMealPlanService mealPlanService) : BaseApiController
