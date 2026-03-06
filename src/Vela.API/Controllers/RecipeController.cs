@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers
 {
+	[Authorize]
 	[ApiController]
 	[Route("api/[controller]")]
 	public class RecipeController(IRecipeService recipeService) : BaseApiController
@@ -16,8 +18,7 @@ namespace Vela.API.Controllers
 			var recipes = await _recipeService.GetAllRecipesAsync();
 			return Ok(recipes);
 		}
-
-
+		
 		[HttpGet("{id}")]
 		public async Task<ActionResult<RecipeDto>> GetRecipeById(Guid id)
 		{
@@ -26,7 +27,7 @@ namespace Vela.API.Controllers
 				return NotFound();
 			return Ok(recipe);
 		}
-
+		
 		[HttpGet("next")]
 		public async Task<ActionResult<IEnumerable<RecipeSummaryDto>>> GetNextRecipes(
 			[FromQuery] int limit = 20,

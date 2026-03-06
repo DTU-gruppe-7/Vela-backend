@@ -8,6 +8,6 @@ public class MealPlanEntryDto
     public required string Day { get; set; }
     public required string MealType { get; set; }
     public int Servings { get; set; }
-    public DateTime AddedAt { get; set; }
+    public DateTimeOffset AddedAt { get; set; }
     public RecipeSummaryDto? Recipe { get; set; }
 }

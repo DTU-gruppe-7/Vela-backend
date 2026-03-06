@@ -18,15 +18,15 @@ public class SwipeRepository : ISwipeRepository
         await _context.Set<SwipeRecipe>().AddAsync(swipe);
         await _context.SaveChangesAsync();
     }
-    public async Task<bool> HasUserSwipedOnRecipeAsync(Guid userId, Guid recipeId)
+    public async Task<bool> HasUserSwipedOnRecipeAsync(string userId, Guid recipeId)
     {
         return await _context.Set<SwipeRecipe>()
             .AnyAsync(sr => sr.UserId == userId && sr.RecipeId == recipeId);
     }
-    public async Task<IEnumerable<Recipe>> GetLikedRecipesByUserIdAsync(Guid userId)
+    public async Task<IEnumerable<Recipe>> GetLikedRecipesByUserIdAsync(string userId)
     {
         return await _context.Set<SwipeRecipe>()
-            .Where(sr => sr.UserId == userId && sr.Direction == SwipeDirection.Like)
+            .Where(sr => sr.UserId == userId && sr.Direction == SwipeDirection.Liked)
             .Select(sr => sr.Recipe)
             .ToListAsync();
     }

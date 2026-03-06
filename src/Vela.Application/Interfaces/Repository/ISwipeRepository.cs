@@ -5,6 +5,6 @@ namespace Vela.Application.Interfaces.Repository;
 public interface ISwipeRepository
 {
     Task RecordSwipeAsync(SwipeRecipe swipe);
-    Task<bool> HasUserSwipedOnRecipeAsync(Guid userId, Guid recipeId);
-    Task <IEnumerable<Recipe>> GetLikedRecipesByUserIdAsync(Guid userId);
+    Task<bool> HasUserSwipedOnRecipeAsync(string userId, Guid recipeId);
+    Task <IEnumerable<Recipe>> GetLikedRecipesByUserIdAsync(string userId);
 }

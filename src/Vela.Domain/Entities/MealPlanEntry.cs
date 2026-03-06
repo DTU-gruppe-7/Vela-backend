@@ -13,5 +13,5 @@ public class MealPlanEntry
     public required string Day { get; set; } 
     public required string MealType { get; set; }
     public int Servings { get; set; } = 1;
-    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset AddedAt { get; set; } = DateTimeOffset.UtcNow;
 }
