@@ -31,6 +31,37 @@ docker compose up -d
 
 ```
 
+--
+
+## 🔐 Configuration Setup (First Time Only)
+
+Before running the application for the first time, you need to configure your local secrets:
+
+### Set up User Secrets
+
+Run the following commands from the project root directory:
+
+```bash
+# Initialize user secrets for the API project
+dotnet user-secrets init --project src/Vela.API
+
+# Configure JWT Secret (required for authentication)
+dotnet user-secrets set 'JwtSettings:Secret' 'YourVerySecureSecretKeyMustBeAtLeast32CharactersLongForSecurity12345!' --project src/Vela.API
+
+# Configure Database Connection
+dotnet user-secrets set 'ConnectionStrings:VelaDbConnection' 'Host=localhost;Database=VelaDB;Username=user;Password=Password' --project src/Vela.API
+```
+Tip
+User secrets are stored locally on your machine and are never committed to source control. Each developer needs to run these commands once on their local environment.
+Important
+The JWT Secret must be at least 32 characters long for security reasons. Generate a secure random string for production environments.
+Verify Configuration
+After setting up user secrets, verify they're correctly configured:
+```bash
+dotnet user-secrets list --project src/Vela.API
+```
+You should see your configured secrets (values are hidden for security).
+
 ### 3. Update Database
 
 Apply migrations to your local instance.
@@ -86,8 +117,22 @@ To populate your database with initial recipe data:
 * * `src/Vela.Application` - DTOs, Interfaces and Services.
 
 ---
+## Update the database
 
-## Update in the database structure 
+After changing or creating new database schemas go through these steps:
+
+# 1. Make the migration
+```bash
+dotnet ef migrations add InitialCreate --project src/Vela.Infrastructure --startup-project src/Vela.API
+```
+
+# 2. Push it to the database
+```bash
+dotnet ef database update --project src/Vela.Infrastructure --startup-project src/Vela.API
+```
+---
+
+## Start the database from scratch 
 OBS! Deletes the whole database!
 
 Always try to fix it by migrating (Step 4-5)
@@ -107,11 +152,14 @@ docker compose down -v
 docker compose up -d
 ```
 
-# 4. Make the migration
+# 4. Delete folders:
+1. Delete the .\postgres-data folder and the .\src\Vela.Infrastructure\Migrations folder
+
+# 5. Make the migration
 ```bash
 dotnet ef migrations add InitialCreate --project src/Vela.Infrastructure --startup-project src/Vela.API
 ```
-# 5. Push it to the database
+# 6. Push it to the database
 ```bash
 dotnet ef database update --project src/Vela.Infrastructure --startup-project src/Vela.API
 ```

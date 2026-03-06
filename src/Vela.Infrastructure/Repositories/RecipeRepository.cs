@@ -42,11 +42,18 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .AnyAsync(r => r.Name.ToLower() == name.ToLower());
     }
     
-    public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(string userId, int limit)
+    public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit, string? category = null)
+
     {
-        return await _dbSet
-            .Where(r => !_context.Set<SwipeRecipe>().Any(sr => sr.RecipeId == r.Id && sr.UserId == userId))
+        var query = _dbSet
+            .Where(r => !_context.Set<SwipeRecipe>().Any(sr => sr.RecipeId == r.Id && sr.UserId == userId));
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(r => r.Category == category);
+        }
+        return await query
             .OrderBy(r => r.Id)
+            .Take(limit)
             .Select(r => new Recipe
             {
                 Id = r.Id,
@@ -58,7 +65,16 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
                 KeywordsJson = r.KeywordsJson
             })
             .AsNoTracking()
-            .Take(limit)
+            .ToListAsync();
+    }
+    
+    public async Task<IEnumerable<string>> GetCategoriesAsync()
+    {
+        return await _context.Recipes
+            .Where(r => r.Category != null && r.Category != "")
+            .Select(r => r.Category!)
+            .Distinct()
+            .OrderBy(c => c)
             .ToListAsync();
     }
 }
