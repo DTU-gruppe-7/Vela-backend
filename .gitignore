@@ -489,3 +489,5 @@ pgdata/
 
 appsettings.Development.json
 secrets.json
+
+**/bin\\Debug/
