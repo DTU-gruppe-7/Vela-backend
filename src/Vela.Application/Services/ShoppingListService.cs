@@ -6,9 +6,11 @@ using Vela.Domain.Entities;
 
 namespace Vela.Application.Services;
 
-public class ShoppingListService(IShoppingListRepository shoppingListRepository) : IShoppingListService
+public class ShoppingListService(IShoppingListRepository shoppingListRepository,
+    IIngredientRepository ingredientRepository) : IShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
+    private readonly IIngredientRepository _ingredientRepository = ingredientRepository;
     public async Task<IEnumerable<ShoppingListSummaryDto>> GetAllShoppingListsAsync()
     {
         var shoppingLists = await _shoppingListRepository.GetAllAsync();
@@ -93,4 +95,49 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository)
         await _shoppingListRepository.SaveChangesAsync();
         return Result.Ok();
     } 
+    
+    public async Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, Guid userId, AddShoppingListItemDto dto)
+    {
+        var shoppingList = await _shoppingListRepository.GetByUuidAsync(shoppingListId);
+        if (shoppingList == null)
+            return Result<ShoppingListItemDto>.Fail("Shopping list not found");
+
+        var ingredient = await _ingredientRepository.GetByUuidAsync(dto.IngredientId);
+        if (ingredient == null)
+            return Result<ShoppingListItemDto>.Fail("Ingredient not found");
+        
+        var item = new ShoppingListItem
+        {
+            Id = Guid.NewGuid(),
+            ShoppingListId = shoppingListId,
+            ShoppingList = shoppingList,
+            IngredientId = dto.IngredientId,
+            Ingredient = ingredient,
+            UserId = userId,
+            Quantity = dto.Quantity,
+            Unit = dto.Unit,
+            Price = dto.Price,
+            Shop = dto.Shop,
+            IsBought = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+        await _shoppingListRepository.AddItemAsync(item);
+
+        var itemDto = new ShoppingListItemDto
+        {
+            Id = item.Id,
+            IngredientId = item.IngredientId,
+            IngredientName = ingredient.Name,
+            UserId = item.UserId,
+            Quantity = item.Quantity,
+            Unit = item.Unit,
+            Price = item.Price,
+            Shop = item.Shop,
+            IsBought = item.IsBought,
+            CreatedAt = item.CreatedAt,
+            UpdatedAt = item.UpdatedAt
+        };
+
+        return Result<ShoppingListItemDto>.Ok(itemDto);
+    }
 }
