@@ -46,7 +46,7 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
         };
     }
 
-    public async Task<IEnumerable<RecipeSummaryDto>> GetNextRecipesAsync(Guid userId, int limit, string? category = null)
+    public async Task<IEnumerable<RecipeSummaryDto>> GetNextRecipesAsync(string userId, int limit, string? category = null)
 
     {
         var recipes = await _recipeRepository.GetNextRecipesAsync(userId, limit, category);
