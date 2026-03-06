@@ -42,11 +42,14 @@ Before running the application for the first time, you need to configure your lo
 Run the following commands from the project root directory:
 
 ```bash
+# Initialize user secrets for the API project
+dotnet user-secrets init --project src/Vela.API
+
 # Configure JWT Secret (required for authentication)
-dotnet user-secrets set "JwtSettings:Secret" "YourSecureSecretKeyHere-MustBeAtLeast32CharactersLong!" --project src/Vela.API
+dotnet user-secrets set 'JwtSettings:Secret' 'YourVerySecureSecretKeyMustBeAtLeast32CharactersLongForSecurity12345!' --project src/Vela.API
 
 # Configure Database Connection
-dotnet user-secrets set "ConnectionStrings:VelaDbConnection" "Host=localhost;Database=VelaDB;Username=user;Password=Password" --project src/Vela.API
+dotnet user-secrets set 'ConnectionStrings:VelaDbConnection' 'Host=localhost;Database=VelaDB;Username=user;Password=Password' --project src/Vela.API
 ```
 Tip
 User secrets are stored locally on your machine and are never committed to source control. Each developer needs to run these commands once on their local environment.
