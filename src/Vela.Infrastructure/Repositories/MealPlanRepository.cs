@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities;
 using Vela.Infrastructure.Data;
@@ -17,6 +17,15 @@ public class MealPlanRepository : Repository<MealPlan>, IMealPlanRepository
             .Include(mp => mp.Entries)
             .ThenInclude(mpe => mpe.Recipe)
             .FirstOrDefaultAsync(mp => mp.Id == mealPlanId);
+    }
+
+    public async Task<IEnumerable<MealPlan>> GetByUserIdAsync(string userId)
+    {
+        return await _dbSet
+            .Where(mp => mp.UserId == userId)
+            .Include(mp => mp.Entries)
+            .ThenInclude(mpe => mpe.Recipe)
+            .ToListAsync();
     }
 
     public async Task AddEntryAsync(MealPlanEntry entry)

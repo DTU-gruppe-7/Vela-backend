@@ -80,5 +80,17 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         modelBuilder.Entity<MealPlanEntry>()
             .HasIndex(mpe => new { mpe.MealPlanId, mpe.Day, mpe.MealType });
+
+        // MealPlan relationship with AppUser
+        modelBuilder.Entity<MealPlan>()
+            .HasOne<AppUser>()
+            .WithMany(u => u.MealPlans)
+            .HasForeignKey(mp => mp.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired();
+
+        // Index for hurtig opslag på UserId
+        modelBuilder.Entity<MealPlan>()
+            .HasIndex(mp => mp.UserId);
     }
 }

@@ -28,11 +28,19 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         return Result<IEnumerable<MealPlanDto>>.Ok(dtos);
     }
 
-    public async Task<Result<MealPlanDto>> CreateMealPlanAsync(string name, string? description = null)
+    public async Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansByUserAsync(string userId)
+    {
+        var mealPlans = await _mealPlanRepository.GetByUserIdAsync(userId);
+        var dtos = mealPlans.Select(mp => MapToDto(mp, mp.Entries)).ToList();
+        return Result<IEnumerable<MealPlanDto>>.Ok(dtos);
+    }
+
+    public async Task<Result<MealPlanDto>> CreateMealPlanAsync(string userId, string name, string? description = null)
     {
         var mealPlan = new MealPlan
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             Name = name,
             Description = description,
             CreatedAt = DateTimeOffset.UtcNow,
@@ -121,6 +129,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         return new MealPlanDto
         {
             Id = mealPlan.Id,
+            UserId = mealPlan.UserId,
             Name = mealPlan.Name,
             Description = mealPlan.Description,
             CreatedAt = mealPlan.CreatedAt,

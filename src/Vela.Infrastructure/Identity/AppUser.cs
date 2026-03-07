@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿﻿using Microsoft.AspNetCore.Identity;
+using Vela.Domain.Entities;
 
 namespace Vela.Infrastructure.Identity;
 
@@ -19,4 +20,7 @@ public class AppUser : IdentityUser
     // Audit og administration
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public bool IsActive { get; set; } = true;
+    
+    // Navigation properties
+    public List<MealPlan> MealPlans { get; set; } = new();
 }
