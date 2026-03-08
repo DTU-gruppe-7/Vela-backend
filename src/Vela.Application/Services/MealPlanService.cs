@@ -92,7 +92,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             MealPlan = mealPlan,
             RecipeId = request.RecipeId,
             Recipe = recipe,
-            Day = request.Day,
+            Date = request.Date,
             MealType = request.MealType,
             Servings = request.Servings,
             AddedAt = DateTimeOffset.UtcNow
@@ -159,7 +159,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             Id = entry.Id,
             MealPlanId = entry.MealPlanId,
             RecipeId = entry.RecipeId,
-            Day = entry.Day,
+            Date = entry.Date,
             MealType = entry.MealType,
             Servings = entry.Servings,
             AddedAt = entry.AddedAt,
