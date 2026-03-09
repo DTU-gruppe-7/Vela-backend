@@ -9,4 +9,5 @@ public interface IShoppingListRepository : IRepository<ShoppingList>
     Task<IEnumerable<ShoppingList>> GetByUserIdAsync(string userId);
     Task<IEnumerable<ShoppingList>> GetByGroupId(Guid groupId);
     Task<ShoppingListItem?> GetItemByIdAsync(Guid id);
+    Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item);
 }

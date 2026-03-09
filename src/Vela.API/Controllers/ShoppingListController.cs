@@ -35,7 +35,20 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         var shoppingList = await _shoppingListService.CreateShoppingListAsync(userId, dto);
         return CreatedAtAction(nameof(GetShoppingListById), new { id = shoppingList.Id }, shoppingList);
     }
+    
+    [HttpPost("{id}/items")]
+    public async Task<ActionResult<ShoppingListItemDto>> AddItem(Guid id, [FromBody] AddShoppingListItemDto dto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _shoppingListService.AddItemAsync(id, userId, dto);
 
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return CreatedAtAction(nameof(GetShoppingListById), new { id }, result.Data);
+    }
+
+    
     [HttpPatch("items/{itemId}/bought")]
     public async Task<IActionResult> MarkItemAsBoughtAsync(Guid itemId)
     {

@@ -60,4 +60,11 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
             .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id);
     }
+    
+    public async Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item)
+    {
+        await _context.Set<ShoppingListItem>().AddAsync(item);
+        await _context.SaveChangesAsync();
+        return item;
+    }
 }
