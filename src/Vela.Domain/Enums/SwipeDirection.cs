@@ -8,10 +8,10 @@ public enum SwipeDirection
     /// <summary>
     /// User likes the recipe
     /// </summary>
-    Liked = 1,
+    Like = 1,
 
     /// <summary>
     /// User dislikes the recipe
     /// </summary>
-    Disliked = 0
+    Dislike = 0
 }
