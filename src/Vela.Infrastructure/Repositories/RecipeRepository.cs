@@ -42,7 +42,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .AnyAsync(r => r.Name.ToLower() == name.ToLower());
     }
     
-    public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(Guid userId, int limit, string? category = null)
+    public async Task<IEnumerable<Recipe>> GetNextRecipesAsync(string userId, int limit, string? category = null)
+
     {
         var query = _dbSet
             .Where(r => !_context.Set<SwipeRecipe>().Any(sr => sr.RecipeId == r.Id && sr.UserId == userId));

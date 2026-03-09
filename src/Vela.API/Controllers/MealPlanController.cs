@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class MealPlanController(IMealPlanService mealPlanService) : BaseApiController
@@ -13,7 +15,8 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
     [HttpGet]
     public async Task<IActionResult> GetAllMealPlans()
     {
-        var result = await _mealPlanService.GetAllMealPlansAsync();
+        var userId = GetCurrentUserId();
+        var result = await _mealPlanService.GetAllMealPlansByUserAsync(userId);
         return Ok(result.Data);
     }
 
@@ -30,7 +33,8 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
     [HttpPost]
     public async Task<IActionResult> CreateMealPlan([FromBody] CreateMealPlanRequest request)
     {
-        var result = await _mealPlanService.CreateMealPlanAsync(request.Name, request.Description);
+        var userId = GetCurrentUserId();
+        var result = await _mealPlanService.CreateMealPlanAsync(userId, request.Name, request.Description);
         return CreatedAtAction(nameof(GetMealPlan), new { id = result.Data!.Id }, result.Data);
     }
 

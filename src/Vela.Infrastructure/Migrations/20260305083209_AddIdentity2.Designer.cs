@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vela.Infrastructure.Data;
@@ -11,9 +12,11 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260305083209_AddIdentity2")]
+    partial class AddIdentity2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -190,7 +193,7 @@ namespace Vela.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
@@ -200,16 +203,10 @@ namespace Vela.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTimeOffset>("UpdatedAt")
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("MealPlans");
                 });
@@ -220,7 +217,7 @@ namespace Vela.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("AddedAt")
+                    b.Property<DateTime>("AddedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Day")
@@ -345,9 +342,8 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
@@ -414,9 +410,8 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("SwipedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
                     b.HasKey("SwipeId");
 
@@ -575,15 +570,6 @@ namespace Vela.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.MealPlan", b =>
-                {
-                    b.HasOne("Vela.Infrastructure.Identity.AppUser", null)
-                        .WithMany("MealPlans")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Vela.Domain.Entities.MealPlanEntry", b =>
                 {
                     b.HasOne("Vela.Domain.Entities.MealPlan", "MealPlan")
@@ -665,11 +651,6 @@ namespace Vela.Infrastructure.Migrations
             modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("Vela.Infrastructure.Identity.AppUser", b =>
-                {
-                    b.Navigation("MealPlans");
                 });
 #pragma warning restore 612, 618
         }

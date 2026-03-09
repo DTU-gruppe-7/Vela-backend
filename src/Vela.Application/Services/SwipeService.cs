@@ -17,7 +17,7 @@ public class SwipeService : ISwipeService
         _swipeRepository = swipeRepository;
     }
 
-    public async Task<Result> RecordSwipeAsync(Guid userId, SwipeDto swipeDto)
+    public async Task<Result> RecordSwipeAsync(string userId, SwipeDto swipeDto)
     {
         var recipe = await _recipeRepository.GetByUuidAsync(swipeDto.RecipeId);
         if (recipe == null)
@@ -42,7 +42,7 @@ public class SwipeService : ISwipeService
         return Result.Ok();
     }
     
-    public async Task<IEnumerable<RecipeSummaryDto>> GetLikedRecipesByUserIdAsync(Guid userId)
+    public async Task<IEnumerable<RecipeSummaryDto>> GetLikedRecipesByUserIdAsync(string userId)
     {
         var likedRecipes = await _swipeRepository.GetLikedRecipesByUserIdAsync(userId);
         return likedRecipes.Select(r => new RecipeSummaryDto

@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Vela.Domain.Entities;
+using Vela.Infrastructure.Identity;
 
 namespace Vela.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<AppUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
     
@@ -78,5 +80,17 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<MealPlanEntry>()
             .HasIndex(mpe => new { mpe.MealPlanId, mpe.Day, mpe.MealType });
+
+        // MealPlan relationship with AppUser
+        modelBuilder.Entity<MealPlan>()
+            .HasOne<AppUser>()
+            .WithMany(u => u.MealPlans)
+            .HasForeignKey(mp => mp.UserId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .IsRequired();
+
+        // Index for hurtig opslag på UserId
+        modelBuilder.Entity<MealPlan>()
+            .HasIndex(mp => mp.UserId);
     }
 }

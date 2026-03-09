@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vela.Infrastructure.Data;
@@ -11,9 +12,11 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260306095439_UpdatedTypes")]
+    partial class UpdatedTypes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -203,13 +206,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("MealPlans");
                 });
@@ -575,15 +572,6 @@ namespace Vela.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.MealPlan", b =>
-                {
-                    b.HasOne("Vela.Infrastructure.Identity.AppUser", null)
-                        .WithMany("MealPlans")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Vela.Domain.Entities.MealPlanEntry", b =>
                 {
                     b.HasOne("Vela.Domain.Entities.MealPlan", "MealPlan")
@@ -665,11 +653,6 @@ namespace Vela.Infrastructure.Migrations
             modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("Vela.Infrastructure.Identity.AppUser", b =>
-                {
-                    b.Navigation("MealPlans");
                 });
 #pragma warning restore 612, 618
         }

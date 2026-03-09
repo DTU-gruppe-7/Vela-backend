@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ShoppingListController(IShoppingListService shoppingListService) : BaseApiController
