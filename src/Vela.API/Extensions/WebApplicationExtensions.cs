@@ -1,4 +1,6 @@
-﻿namespace Vela.API.Extensions;
+﻿using Scalar.AspNetCore;
+
+namespace Vela.API.Extensions;
 
 public static class WebApplicationExtensions
 {
@@ -6,11 +8,13 @@ public static class WebApplicationExtensions
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            app.MapOpenApi();
+            app.MapScalarApiReference();
         }
-
-        app.UseHttpsRedirection();
+        else
+        {
+            app.UseHttpsRedirection();
+        }
         
         app.UseCors("AllowFrontend");
         
