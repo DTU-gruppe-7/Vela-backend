@@ -96,7 +96,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     } 
     
-    public async Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, Guid userId, AddShoppingListItemDto dto)
+    public async Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, string userId, AddShoppingListItemDto dto)
     {
         var shoppingList = await _shoppingListRepository.GetByUuidAsync(shoppingListId);
         if (shoppingList == null)
