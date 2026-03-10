@@ -26,7 +26,7 @@ public class SwipeRepository : ISwipeRepository
     public async Task<IEnumerable<Recipe>> GetLikedRecipesByUserIdAsync(string userId)
     {
         return await _context.Set<SwipeRecipe>()
-            .Where(sr => sr.UserId == userId && sr.Direction == SwipeDirection.Liked)
+            .Where(sr => sr.UserId == userId && sr.Direction == SwipeDirection.Like)
             .Select(sr => sr.Recipe)
             .ToListAsync();
     }
