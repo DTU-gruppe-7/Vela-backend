@@ -79,7 +79,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasIndex(mpe => mpe.MealPlanId);
 
         modelBuilder.Entity<MealPlanEntry>()
-            .HasIndex(mpe => new { mpe.MealPlanId, mpe.Day, mpe.MealType });
+            .HasIndex(mpe => new { mpe.MealPlanId, mpe.Date, mpe.MealType });
 
         // MealPlan relationship with AppUser
         modelBuilder.Entity<MealPlan>()
