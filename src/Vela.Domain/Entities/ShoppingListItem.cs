@@ -9,7 +9,7 @@ public class ShoppingListItem
     public Guid IngredientId { get; set; }
     public virtual required Ingredient Ingredient { get; set; }
     
-    public string UserId { get; set; }
+    public string? AssignedUserId { get; set; }
     
     public double Quantity { get; set; }
     public string? Unit { get; set; }

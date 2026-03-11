@@ -50,4 +50,15 @@ public class MealPlanRepository : Repository<MealPlan>, IMealPlanRepository
             .Include(mpe => mpe.Recipe)
             .FirstOrDefaultAsync(mpe => mpe.Id == entryId);
     }
+
+    public async Task<MealPlan?> GetByIdWithEntriesAsync(Guid id)
+    {
+        return await _context.MealPlans
+            .AsSplitQuery()
+            .Include(mp => mp.Entries)
+            .ThenInclude(e => e.Recipe)
+            .ThenInclude(r => r.Ingredients)
+            .ThenInclude(ri => ri.Ingredient)
+            .FirstOrDefaultAsync(mp => mp.Id == id);
+    }
 }
