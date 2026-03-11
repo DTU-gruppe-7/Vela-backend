@@ -7,4 +7,6 @@ public class AddShoppingListItemDto
     public string? Unit { get; set; }
     public decimal? Price { get; set; }
     public string? Shop { get; set; }
+    
+    public string? AssignedUserId { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Service;
@@ -57,5 +58,31 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
             return NotFound(new { message = result.ErrorMessage });
         
         return NoContent();
+    }
+    
+    [HttpPost("from-mealplan/{mealPlanId}")]
+    public async Task<ActionResult<ShoppingListDto>> AddFromMealPlan(
+        Guid mealPlanId, 
+        [FromQuery] Guid? existingListId = null, 
+        [FromQuery] Guid? groupId = null)
+    {
+        var userId = string.Empty;
+        
+        if (groupId == null)
+        {
+            userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+        }
+        
+        var result = await _shoppingListService.GenerateFromMealPlanAsync(
+            mealPlanId, 
+            userId, 
+            existingListId, 
+            groupId);
+
+        if (!result.Success)
+            return BadRequest(result.ErrorMessage);
+
+        return Ok(result.Data);
     }
 }

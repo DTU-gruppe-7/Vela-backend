@@ -15,4 +15,10 @@ public class IngredientRepository : Repository<Ingredient>, IIngredientRepositor
         return await _dbSet
             .FirstOrDefaultAsync(i => i.Name.ToLower() == name.ToLower());
     }
+
+    public async Task<Ingredient?> GetByIdAsync(Guid ingredientId)
+    {
+        return await _dbSet
+            .FirstOrDefaultAsync(i => i.Id == ingredientId);
+    }
 }
