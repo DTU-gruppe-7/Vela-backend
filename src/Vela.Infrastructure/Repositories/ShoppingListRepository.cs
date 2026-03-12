@@ -20,7 +20,6 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
     {
         return await _dbSet
             .Include(sl => sl.Items)!
-            .ThenInclude(i => i.Ingredient)
             .FirstOrDefaultAsync(sl => sl.Id == id);
     }
 
@@ -32,7 +31,6 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
     {
         return await _dbSet
             .Include(sl => sl.Items)! 
-            .ThenInclude(i => i.Ingredient)
             .Where(sl => sl.UserId == userId)
             .AsNoTracking()
             .ToListAsync();
@@ -46,7 +44,6 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
     {
         return await _dbSet
             .Include(sl => sl.Items)! 
-            .ThenInclude(i => i.Ingredient)
             .Where(sl => sl.GroupId == groupId)
             .AsNoTracking()
             .ToListAsync();
@@ -56,7 +53,6 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
     {
         return await _dbSet
             .Include(sl => sl.Items)!
-            .ThenInclude(i => i.Ingredient)
             .AsNoTracking()
             .FirstOrDefaultAsync(sl => sl.Id == id);
     }
@@ -64,14 +60,18 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
     public async Task<ShoppingListItem?> GetItemByIdAsync(Guid id)
     {
         return await _context.Set<ShoppingListItem>()
-            .Include(i => i.Ingredient)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
     
     public async Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item)
     {
         await _context.Set<ShoppingListItem>().AddAsync(item);
-        await _context.SaveChangesAsync();
+        return item;
+    }
+
+    public async Task<ShoppingListItem?> UpdateItemAsync(ShoppingListItem item)
+    {
+        _context.Set<ShoppingListItem>().Update(item);
         return item;
     }
 
@@ -82,7 +82,6 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
             return null;
 
         _context.Set<ShoppingListItem>().Remove(item);
-        await _context.SaveChangesAsync();
         return item;
     }
 }
