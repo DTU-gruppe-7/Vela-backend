@@ -191,7 +191,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 Id = i.Id,
                 IngredientId = i.IngredientId,
                 IngredientName = i.Ingredient?.Name ?? string.Empty,
-                UserId = i.UserId,
+                AssignedUserId = i.AssignedUserId,
                 Quantity = i.Quantity,
                 Unit = i.Unit,
                 Price = i.Price,
@@ -216,7 +216,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             Id = item.Id,
             IngredientId = item.IngredientId,
             IngredientName = item.Ingredient?.Name ?? string.Empty,
-            UserId = item.UserId,
+            AssignedUserId = item.AssignedUserId,
             Quantity = item.Quantity,
             Unit = item.Unit,
             Price = item.Price,
@@ -226,7 +226,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             UpdatedAt = item.UpdatedAt
         };
 
-        return Result<ShoppingListItemDto>.Ok(itemDto)
+        return Result<ShoppingListItemDto>.Ok(itemDto);
     }
     
     public async Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(
