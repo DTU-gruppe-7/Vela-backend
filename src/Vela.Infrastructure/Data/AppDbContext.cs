@@ -46,17 +46,12 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         modelBuilder.Entity<ShoppingList>()
             .HasMany(sl => sl.Items)
-            .WithOne(i => i.ShoppingList)
+            .WithOne()
             .HasForeignKey(i => i.ShoppingListId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ShoppingListItem>()
             .HasKey(si => si.Id);
-
-        modelBuilder.Entity<ShoppingListItem>()
-            .HasOne(si => si.Ingredient)
-            .WithMany()
-            .HasForeignKey(si => si.IngredientId);
 
         // MealPlanEntry configuration
         modelBuilder.Entity<MealPlanEntry>()

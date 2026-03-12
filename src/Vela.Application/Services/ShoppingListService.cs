@@ -46,8 +46,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             Items = shoppingList.Items?.Select(i => new ShoppingListItemDto
             {
                 Id = i.Id,
-                IngredientId = i.IngredientId,
-                IngredientName = i.Ingredient.Name,
+                IngredientName = i.IngredientName,
                 AssignedUserId = i.AssignedUserId,
                 Quantity = i.Quantity,
                 Unit = i.Unit,
@@ -74,6 +73,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         };
 
         await _shoppingListRepository.AddAsync(shoppingList);
+        await _shoppingListRepository.SaveChangesAsync();
 
         return new ShoppingListDto
         {
@@ -87,62 +87,59 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         };
     }
 
-    public async Task<Result> MarkItemAsBoughtAsync(Guid itemId)
+    public async Task<Result<ShoppingListItemDto>> UpdateShoppingListItem(Guid itemId, ShoppingListItemDto dto )
     {
         var item = await _shoppingListRepository.GetItemByIdAsync(itemId);
         if (item == null)
-            return Result.Fail("Item not found");
+            return Result<ShoppingListItemDto>.Fail("Item not found");
         
-        item.IsBought = true;
+        item.IngredientName = dto.IngredientName;
+        item.AssignedUserId = dto.AssignedUserId;
+        item.Quantity = dto.Quantity;
+        item.Unit = dto.Unit;
+        item.Price = dto.Price;
+        item.Shop = dto.Shop;
+        item.IsBought = dto.IsBought;
         item.UpdatedAt = DateTimeOffset.UtcNow;
-
+        
         await _shoppingListRepository.SaveChangesAsync();
-        return Result.Ok();
+        return Result<ShoppingListItemDto>.Ok(dto);
     } 
     
     public async Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, string userId, AddShoppingListItemDto dto)
     {
-        var shoppingList = await _shoppingListRepository.GetByUuidAsync(shoppingListId);
+        var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(shoppingListId);
         if (shoppingList == null)
             return Result<ShoppingListItemDto>.Fail("Shopping list not found");
-
-        var ingredient = await _ingredientRepository.GetByUuidAsync(dto.IngredientId);
-        if (ingredient == null)
-            return Result<ShoppingListItemDto>.Fail("Ingredient not found");
         
-        var item = new ShoppingListItem
-        {
-            Id = Guid.NewGuid(),
-            ShoppingListId = shoppingListId,
-            ShoppingList = shoppingList,
-            IngredientId = dto.IngredientId,
-            Ingredient = ingredient,
-            AssignedUserId = dto.AssignedUserId,
-            Quantity = dto.Quantity,
-            Unit = dto.Unit,
-            Price = dto.Price,
-            Shop = dto.Shop,
-            IsBought = false,
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-        await _shoppingListRepository.AddItemAsync(item);
+        var normalizedName = dto.IngredientName.Trim().ToLowerInvariant();
+        var (normalizedQty, normalizedUnit) = UnitConverter.Normalize(dto.Quantity, dto.Unit);
+        
+        var (item, isNew) = AccumulateOrCreateItem(shoppingList, normalizedName, normalizedUnit, normalizedQty);
 
-        var itemDto = new ShoppingListItemDto
+        if (isNew)
         {
-            Id = item.Id,
-            IngredientId = item.IngredientId,
-            IngredientName = ingredient.Name,
-            AssignedUserId = item.AssignedUserId,
-            Quantity = item.Quantity,
-            Unit = item.Unit,
-            Price = item.Price,
-            Shop = item.Shop,
-            IsBought = item.IsBought,
-            CreatedAt = item.CreatedAt,
-            UpdatedAt = item.UpdatedAt
-        };
+            shoppingList.Items.Add(item);
+            await _shoppingListRepository.AddItemAsync(item);
+        }
+        shoppingList.UpdatedAt = DateTimeOffset.UtcNow;
+        
+        await _shoppingListRepository.SaveChangesAsync();
 
-        return Result<ShoppingListItemDto>.Ok(itemDto);
+        return Result<ShoppingListItemDto>.Ok(
+            new ShoppingListItemDto
+            {
+                Id = item.Id,
+                IngredientName = item.IngredientName,
+                AssignedUserId = item.AssignedUserId,
+                Quantity = item.Quantity,
+                Unit = item.Unit,
+                Price = item.Price,
+                Shop = item.Shop,
+                IsBought = item.IsBought,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            });
     }
 
     public async Task<Result<ShoppingListDto>> UpdateShoppingListAsync(Guid id, UpdateShoppingListDto dto)
@@ -157,6 +154,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         shoppingList.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _shoppingListRepository.UpdateAsync(shoppingList);
+        await _shoppingListRepository.SaveChangesAsync();
 
         return Result<ShoppingListDto>.Ok(new ShoppingListDto
         {
@@ -170,63 +168,26 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         });
     }
 
-    public async Task<Result<ShoppingListDto>> DeleteShoppingListAsync(Guid id)
+    public async Task<Result> DeleteShoppingListAsync(Guid id)
     {
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
         if (shoppingList == null)
-            return Result<ShoppingListDto>.Fail("Shopping list not found");
+            return Result.Fail("Shopping list not found");
 
         await _shoppingListRepository.DeleteAsync(id);
-
-        var dto = new ShoppingListDto
-        {
-            Id = shoppingList.Id,
-            UserId = shoppingList.UserId,
-            GroupId = shoppingList.GroupId,
-            Name = shoppingList.Name,
-            CreatedAt = shoppingList.CreatedAt,
-            UpdatedAt = shoppingList.UpdatedAt,
-            Items = shoppingList.Items?.Select(i => new ShoppingListItemDto
-            {
-                Id = i.Id,
-                IngredientId = i.IngredientId,
-                IngredientName = i.Ingredient?.Name ?? string.Empty,
-                AssignedUserId = i.AssignedUserId,
-                Quantity = i.Quantity,
-                Unit = i.Unit,
-                Price = i.Price,
-                Shop = i.Shop,
-                IsBought = i.IsBought,
-                CreatedAt = i.CreatedAt,
-                UpdatedAt = i.UpdatedAt
-            }).ToList() ?? new()
-        };
-
-        return Result<ShoppingListDto>.Ok(dto);
+        await _shoppingListRepository.SaveChangesAsync();
+    
+        return Result.Ok();
     }
 
-    public async Task<Result<ShoppingListItemDto>> DeleteItemAsync(Guid itemId)
+    public async Task<Result> DeleteItemAsync(Guid itemId)
     {
         var item = await _shoppingListRepository.DeleteItemAsync(itemId);
         if (item == null)
             return Result<ShoppingListItemDto>.Fail("Item not found");
+        await _shoppingListRepository.SaveChangesAsync();
 
-        var itemDto = new ShoppingListItemDto
-        {
-            Id = item.Id,
-            IngredientId = item.IngredientId,
-            IngredientName = item.Ingredient?.Name ?? string.Empty,
-            AssignedUserId = item.AssignedUserId,
-            Quantity = item.Quantity,
-            Unit = item.Unit,
-            Price = item.Price,
-            Shop = item.Shop,
-            IsBought = item.IsBought,
-            CreatedAt = item.CreatedAt,
-            UpdatedAt = item.UpdatedAt
-        };
-
-        return Result<ShoppingListItemDto>.Ok(itemDto);
+        return Result.Ok();
     }
     
     public async Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(
@@ -266,7 +227,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         shoppingList.Items ??= new List<ShoppingListItem>();
 
         // 1) Aggregate all normalized ingredient totals from meal plan
-        var totals = new Dictionary<(Guid IngredientId, string? Unit), double>();
+        var totals = new Dictionary<(String IngredientName, string? Unit), double>();
 
         foreach (var entry in mealPlan.Entries)
         {
@@ -277,60 +238,30 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             {
                 var (normalizedQty, normalizedUnit) =
                     UnitConverter.Normalize(recipeIngred.Quantity * scaleFactor, recipeIngred.Unit);
+                
+                var normalizedName = recipeIngred.Ingredient.Name.Trim().ToLowerInvariant();  
 
-                var key = (recipeIngred.IngredientId, normalizedUnit);
+                var key = (normalizedName, normalizedUnit);
                 totals[key] = totals.TryGetValue(key, out var existingQty)
                     ? existingQty + normalizedQty
                     : normalizedQty;
             }
         }
-
-        // 2) Pre-load all needed ingredients
-        var ingredientIds = totals.Keys.Select(k => k.IngredientId).Distinct();
-        var ingredientLookup = new Dictionary<Guid, Ingredient>();
-        foreach (var id in ingredientIds)
-        {
-            var ingredient = await _ingredientRepository.GetByUuidAsync(id);
-            if (ingredient != null)
-                ingredientLookup[id] = ingredient;
-        }
-
-        // 3) Apply aggregate totals to existing tracked items or create new ones
+        
+        // 2) Apply aggregate totals to existing tracked items or create new ones
         foreach (var kvp in totals)
         {
-            var ingredientId = kvp.Key.IngredientId;
+            var ingredientName = kvp.Key.IngredientName;
             var unit = kvp.Key.Unit;
             var qtyToAdd = kvp.Value;
-
-            var existingItem = shoppingList.Items.FirstOrDefault(i =>
-                i.IngredientId == ingredientId &&
-                i.Unit == unit);
-
-            if (existingItem != null)
+            
+            var (item, isNew) = AccumulateOrCreateItem(shoppingList, ingredientName, unit, qtyToAdd);
+            if (isNew)
             {
-                existingItem.Quantity += qtyToAdd;
-                existingItem.UpdatedAt = DateTimeOffset.UtcNow;
-                continue;
+                await _shoppingListRepository.AddItemAsync(item);
             }
-
-            if (!ingredientLookup.TryGetValue(ingredientId, out var ingredientEntity))
-                continue; // skip if ingredient not found
-
-            shoppingList.Items.Add(new ShoppingListItem
-            {
-                Id = Guid.NewGuid(),
-                ShoppingListId = shoppingList.Id,
-                ShoppingList = shoppingList,
-                IngredientId = ingredientId,
-                Ingredient = ingredientEntity,          // ← required member now set
-                AssignedUserId = string.IsNullOrWhiteSpace(currentUserId) ? null : currentUserId,
-                Quantity = qtyToAdd,
-                Unit = unit,
-                IsBought = false,
-                CreatedAt = DateTimeOffset.UtcNow
-            });
         }
-
+        
         await _shoppingListRepository.SaveChangesAsync();
         return await GetShoppingListById(shoppingList.Id);
     }
@@ -346,5 +277,31 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
 
         await _shoppingListRepository.SaveChangesAsync();
         return Result.Ok();
+    }
+
+    private (ShoppingListItem, bool isNew) AccumulateOrCreateItem(ShoppingList shoppingList, string ingredientName, string? unit, double qtyToAdd)
+    {
+        var existingItem = shoppingList.Items.FirstOrDefault(i =>                                                                                                                                                                       
+            i.IngredientName.Trim().Equals(ingredientName, StringComparison.OrdinalIgnoreCase) &&                                                                                                                                       
+            i.Unit == unit); 
+
+        if (existingItem != null)
+        {
+            existingItem.Quantity += qtyToAdd;
+            existingItem.UpdatedAt = DateTimeOffset.UtcNow;
+            return (existingItem, false);
+        }
+
+        return (new ShoppingListItem
+        {
+            Id = Guid.NewGuid(),
+            ShoppingListId = shoppingList.Id,
+            IngredientName = ingredientName,
+            AssignedUserId = null,
+            Quantity = qtyToAdd,
+            Unit = unit,
+            IsBought = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        }, true);
     }
 }

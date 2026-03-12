@@ -14,14 +14,14 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     private readonly IShoppingListService _shoppingListService = shoppingListService;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<ActionResult<List<ShoppingListSummaryDto>>> GetAll()
     {
         var shoppingList = await _shoppingListService.GetAllShoppingListsAsync();
         return Ok(shoppingList);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ShoppingListDto>> GetShoppingListById(Guid id)
+    public async Task<ActionResult<ShoppingListDto?>> GetShoppingListById(Guid id)
     {
         var shoppingList = await _shoppingListService.GetShoppingListById(id);
         if (shoppingList == null)
@@ -48,13 +48,13 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult<ShoppingListDto>> DeleteShoppingList(Guid id)
+    public async Task<ActionResult> DeleteShoppingList(Guid id)
     {
         var result = await _shoppingListService.DeleteShoppingListAsync(id);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 
-        return Ok(result.Data);
+        return NoContent();
     }
 
     [HttpPost("{id}/items")]
@@ -71,23 +71,23 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
 
     
     [HttpDelete("{id}/items/{itemId}")]
-    public async Task<ActionResult<ShoppingListItemDto>> DeleteItem(Guid id, Guid itemId)
+    public async Task<ActionResult> DeleteItem(Guid id, Guid itemId)
     {
         var result = await _shoppingListService.DeleteItemAsync(itemId);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 
-        return Ok(result.Data);
+        return NoContent();
     }
 
-    [HttpPatch("{id}/items/{itemId}/bought")]
-    public async Task<IActionResult> MarkItemAsBoughtAsync(Guid id, Guid itemId)
+    [HttpPut("{id}/items/{itemId}")]
+    public async Task<ActionResult<ShoppingListItemDto>> UpdateShoppingListItem(Guid id, Guid itemId, [FromBody] ShoppingListItemDto dto)
     {
-        var result = await _shoppingListService.MarkItemAsBoughtAsync(itemId);
+        var result = await _shoppingListService.UpdateShoppingListItem(itemId, dto);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
         
-        return NoContent();
+        return Ok(result.Data);
     }
     
     [HttpPost("from-mealplan/{mealPlanId}")]
@@ -100,7 +100,7 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         
         if (groupId == null)
         {
-            userId = User.FindFirstValue(ClaimTypes.NameIdentifier); 
+            userId = GetCurrentUserId(); 
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
         }
         

@@ -11,4 +11,5 @@ public interface IShoppingListRepository : IRepository<ShoppingList>
     Task<ShoppingListItem?> GetItemByIdAsync(Guid id);
     Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item);
     Task<ShoppingListItem?> DeleteItemAsync(Guid itemId);
+    Task<ShoppingListItem?> UpdateItemAsync(ShoppingListItem item);
 }
