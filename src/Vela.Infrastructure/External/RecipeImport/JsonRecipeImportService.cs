@@ -30,9 +30,11 @@ public class JsonRecipeImportService : IRecipeImportService
         var recipeDtos = JsonSerializer.Deserialize<List<JsonRecipeDto>>(json)
                          ?? throw new InvalidOperationException("Kunne ikke deserialisere recipes.json");
 
+        // Lokalt dictionary til at cache ingredienser – undgår dubletter og unødvendige DB-opslag
+        var ingredientCache = new Dictionary<string, Ingredient>();
+
         foreach (var dto in recipeDtos)
         {
-            // Tjek om opskriften allerede er importeret (baseret på navn)
             if (await _recipeRepository.ExistsByNameAsync(dto.Titel))
                 continue;
 
@@ -52,12 +54,17 @@ public class JsonRecipeImportService : IRecipeImportService
                 Ingredients = new List<RecipeIngredient>()
             };
 
-            await ProcessIngredientsAsync(recipe, dto.Ingredienser);
+            await ProcessIngredientsAsync(recipe, dto.Ingredienser, ingredientCache);
             await _recipeRepository.AddAsync(recipe);
         }
+
+        await _recipeRepository.SaveChangesAsync();
     }
 
-    private async Task ProcessIngredientsAsync(Recipe recipe, Dictionary<string, List<string>> sections)
+    private async Task ProcessIngredientsAsync(
+        Recipe recipe,
+        Dictionary<string, List<string>> sections,
+        Dictionary<string, Ingredient> ingredientCache)
     {
         foreach (var (section, lines) in sections)
         {
@@ -68,7 +75,7 @@ public class JsonRecipeImportService : IRecipeImportService
                 if (string.IsNullOrWhiteSpace(ingredientName))
                     continue;
 
-                var ingredient = await GetOrCreateIngredientAsync(ingredientName);
+                var ingredient = await GetOrCreateIngredientAsync(ingredientName, ingredientCache);
 
                 var recipeIngredient = new RecipeIngredient
                 {
@@ -88,14 +95,25 @@ public class JsonRecipeImportService : IRecipeImportService
         }
     }
 
-    private async Task<Ingredient> GetOrCreateIngredientAsync(string name)
+    private async Task<Ingredient> GetOrCreateIngredientAsync(
+        string name,
+        Dictionary<string, Ingredient> ingredientCache)
     {
         var normalizedName = name.ToLower().Trim();
+
+        // 1. Tjek lokalt cache først
+        if (ingredientCache.TryGetValue(normalizedName, out var cached))
+            return cached;
+
+        // 2. Tjek databasen
         var existing = await _ingredientRepository.GetByNameAsync(normalizedName);
-
         if (existing != null)
+        {
+            ingredientCache[normalizedName] = existing;
             return existing;
+        }
 
+        // 3. Opret ny ingredient og gem i cache
         var newIngredient = new Ingredient
         {
             Id = Guid.NewGuid(),
@@ -107,6 +125,7 @@ public class JsonRecipeImportService : IRecipeImportService
         };
 
         await _ingredientRepository.AddAsync(newIngredient);
+        ingredientCache[normalizedName] = newIngredient;
         return newIngredient;
     }
 }

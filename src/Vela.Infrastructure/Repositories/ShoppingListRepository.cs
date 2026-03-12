@@ -21,7 +21,6 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
         return await _dbSet
             .Include(sl => sl.Items)!
             .ThenInclude(i => i.Ingredient)
-            .AsNoTracking()
             .FirstOrDefaultAsync(sl => sl.Id == id);
     }
 
@@ -52,12 +51,20 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
             .AsNoTracking()
             .ToListAsync();
     }
+    
+    public async Task<ShoppingList?> GetByIdWithItemsReadOnlyAsync(Guid id)
+    {
+        return await _dbSet
+            .Include(sl => sl.Items)!
+            .ThenInclude(i => i.Ingredient)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sl => sl.Id == id);
+    }
 
     public async Task<ShoppingListItem?> GetItemByIdAsync(Guid id)
     {
         return await _context.Set<ShoppingListItem>()
             .Include(i => i.Ingredient)
-            .AsNoTracking()
             .FirstOrDefaultAsync(i => i.Id == id);
     }
     

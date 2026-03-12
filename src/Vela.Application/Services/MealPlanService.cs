@@ -48,6 +48,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         };
 
         await _mealPlanRepository.AddAsync(mealPlan);
+        await _mealPlanRepository.SaveChangesAsync();
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan, new List<MealPlanEntry>()));
     }
 
@@ -62,6 +63,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         mealPlan.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _mealPlanRepository.UpdateAsync(mealPlan);
+        await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
 
@@ -72,6 +74,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             return Result.Fail($"Meal plan with ID {mealPlanId} not found");
 
         await _mealPlanRepository.DeleteAsync(mealPlanId);
+        await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
 
@@ -99,6 +102,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         };
 
         await _mealPlanRepository.AddEntryAsync(entry);
+        await _mealPlanRepository.SaveChangesAsync();
         return Result<MealPlanEntryDto>.Ok(MapEntryToDto(entry));
     }
 
@@ -112,6 +116,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             return Result.Fail("Entry does not belong to this meal plan");
 
         await _mealPlanRepository.RemoveEntryAsync(entryId);
+        await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
 

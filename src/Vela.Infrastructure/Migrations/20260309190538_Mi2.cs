@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Vela.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Sync : Migration
+    public partial class Mi2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

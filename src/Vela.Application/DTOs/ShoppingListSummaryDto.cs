@@ -4,7 +4,7 @@ public class ShoppingListSummaryDto
 {
     public Guid Id { get; set; }
     
-    public required string UserId { get; set; }
+    public string? UserId { get; set; }
     public Guid? GroupId { get; set; }
     
     public string? Name { get; set; }
