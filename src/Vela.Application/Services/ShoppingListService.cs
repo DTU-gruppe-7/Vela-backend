@@ -140,4 +140,88 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
 
         return Result<ShoppingListItemDto>.Ok(itemDto);
     }
+
+    public async Task<Result<ShoppingListDto>> UpdateShoppingListAsync(Guid id, UpdateShoppingListDto dto)
+    {
+        var shoppingList = await _shoppingListRepository.GetByUuidAsync(id);
+        if (shoppingList == null)
+            return Result<ShoppingListDto>.Fail("Shopping list not found");
+
+        if (dto.Name != null)
+            shoppingList.Name = dto.Name;
+
+        shoppingList.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _shoppingListRepository.UpdateAsync(shoppingList);
+
+        return Result<ShoppingListDto>.Ok(new ShoppingListDto
+        {
+            Id = shoppingList.Id,
+            UserId = shoppingList.UserId,
+            GroupId = shoppingList.GroupId,
+            Name = shoppingList.Name,
+            CreatedAt = shoppingList.CreatedAt,
+            UpdatedAt = shoppingList.UpdatedAt,
+            Items = new()
+        });
+    }
+
+    public async Task<Result<ShoppingListDto>> DeleteShoppingListAsync(Guid id)
+    {
+        var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
+        if (shoppingList == null)
+            return Result<ShoppingListDto>.Fail("Shopping list not found");
+
+        await _shoppingListRepository.DeleteAsync(id);
+
+        var dto = new ShoppingListDto
+        {
+            Id = shoppingList.Id,
+            UserId = shoppingList.UserId,
+            GroupId = shoppingList.GroupId,
+            Name = shoppingList.Name,
+            CreatedAt = shoppingList.CreatedAt,
+            UpdatedAt = shoppingList.UpdatedAt,
+            Items = shoppingList.Items?.Select(i => new ShoppingListItemDto
+            {
+                Id = i.Id,
+                IngredientId = i.IngredientId,
+                IngredientName = i.Ingredient?.Name ?? string.Empty,
+                UserId = i.UserId,
+                Quantity = i.Quantity,
+                Unit = i.Unit,
+                Price = i.Price,
+                Shop = i.Shop,
+                IsBought = i.IsBought,
+                CreatedAt = i.CreatedAt,
+                UpdatedAt = i.UpdatedAt
+            }).ToList() ?? new()
+        };
+
+        return Result<ShoppingListDto>.Ok(dto);
+    }
+
+    public async Task<Result<ShoppingListItemDto>> DeleteItemAsync(Guid itemId)
+    {
+        var item = await _shoppingListRepository.DeleteItemAsync(itemId);
+        if (item == null)
+            return Result<ShoppingListItemDto>.Fail("Item not found");
+
+        var itemDto = new ShoppingListItemDto
+        {
+            Id = item.Id,
+            IngredientId = item.IngredientId,
+            IngredientName = item.Ingredient?.Name ?? string.Empty,
+            UserId = item.UserId,
+            Quantity = item.Quantity,
+            Unit = item.Unit,
+            Price = item.Price,
+            Shop = item.Shop,
+            IsBought = item.IsBought,
+            CreatedAt = item.CreatedAt,
+            UpdatedAt = item.UpdatedAt
+        };
+
+        return Result<ShoppingListItemDto>.Ok(itemDto);
+    }
 }

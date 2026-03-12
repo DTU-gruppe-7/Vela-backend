@@ -67,4 +67,15 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
         await _context.SaveChangesAsync();
         return item;
     }
+
+    public async Task<ShoppingListItem?> DeleteItemAsync(Guid itemId)
+    {
+        var item = await _context.Set<ShoppingListItem>().FindAsync(itemId);
+        if (item == null)
+            return null;
+
+        _context.Set<ShoppingListItem>().Remove(item);
+        await _context.SaveChangesAsync();
+        return item;
+    }
 }

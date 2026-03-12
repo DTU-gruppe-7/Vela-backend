@@ -10,4 +10,5 @@ public interface IShoppingListRepository : IRepository<ShoppingList>
     Task<IEnumerable<ShoppingList>> GetByGroupId(Guid groupId);
     Task<ShoppingListItem?> GetItemByIdAsync(Guid id);
     Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item);
+    Task<ShoppingListItem?> DeleteItemAsync(Guid itemId);
 }

@@ -3,5 +3,5 @@
 public class CreateShoppingListDto
 {
     public required string Name { get; set; }
-    public Guid GroupId { get; set; }
+    public Guid? GroupId { get; set; }
 }

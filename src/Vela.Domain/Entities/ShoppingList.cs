@@ -5,7 +5,7 @@ public class ShoppingList
     public Guid Id { get; set; }
     
     public required string UserId { get; set; }
-    public Guid GroupId { get; set; }
+    public Guid? GroupId { get; set; }
     
     public string? Name { get; set; }
     
