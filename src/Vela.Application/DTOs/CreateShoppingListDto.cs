@@ -2,6 +2,6 @@
 
 public class CreateShoppingListDto
 {
-    public string Name { get; set; } = string.Empty;
-    public Guid? GroupId { get; set; } 
+    public required string Name { get; set; }
+    public Guid? GroupId { get; set; }
 }

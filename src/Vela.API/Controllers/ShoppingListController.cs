@@ -37,6 +37,26 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         return CreatedAtAction(nameof(GetShoppingListById), new { id = shoppingList.Id }, shoppingList);
     }
     
+    [HttpPatch("{id}")]
+    public async Task<ActionResult<ShoppingListDto>> UpdateShoppingList(Guid id, [FromBody] UpdateShoppingListDto dto)
+    {
+        var result = await _shoppingListService.UpdateShoppingListAsync(id, dto);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult<ShoppingListDto>> DeleteShoppingList(Guid id)
+    {
+        var result = await _shoppingListService.DeleteShoppingListAsync(id);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
     [HttpPost("{id}/items")]
     public async Task<ActionResult<ShoppingListItemDto>> AddItem(Guid id, [FromBody] AddShoppingListItemDto dto)
     {
@@ -50,8 +70,18 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     }
 
     
-    [HttpPatch("items/{itemId}/bought")]
-    public async Task<IActionResult> MarkItemAsBoughtAsync(Guid itemId)
+    [HttpDelete("{id}/items/{itemId}")]
+    public async Task<ActionResult<ShoppingListItemDto>> DeleteItem(Guid id, Guid itemId)
+    {
+        var result = await _shoppingListService.DeleteItemAsync(itemId);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
+    [HttpPatch("{id}/items/{itemId}/bought")]
+    public async Task<IActionResult> MarkItemAsBoughtAsync(Guid id, Guid itemId)
     {
         var result = await _shoppingListService.MarkItemAsBoughtAsync(itemId);
         if (!result.Success)
