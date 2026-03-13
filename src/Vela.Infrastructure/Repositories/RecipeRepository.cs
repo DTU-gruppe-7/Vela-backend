@@ -86,22 +86,17 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return await _context.Set<SwipeRecipe>()
             .Where(sr => sr.Direction == SwipeDirection.Like)
             .GroupBy(sr => sr.RecipeId)
-            .OrderByDescending(g => g.Count())
-            .ThenBy(g => g.Key)
+            .Select(g => new
+            {
+                RecipeId = g.Key,
+                Likes = g.Count()
+            })
+            .OrderByDescending(x => x.Likes)
             .Take(limit)
             .Join(_dbSet,
-                g => g.Key,
+                x => x.RecipeId,
                 r => r.Id,
-                (g, r) => new Recipe
-                {
-                    Id = r.Id,
-                    Name = r.Name,
-                    Category = r.Category,
-                    ThumbnailUrl = r.ThumbnailUrl,
-                    WorkTime = r.WorkTime,
-                    TotalTime = r.TotalTime,
-                    KeywordsJson = r.KeywordsJson
-                })
+                (x, r) => r)
             .AsNoTracking()
             .ToListAsync();
     }
