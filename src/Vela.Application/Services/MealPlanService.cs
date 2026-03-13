@@ -121,10 +121,9 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         if (entry == null)
             return Result.Fail($"Meal plan entry with ID {entryId} not found");
 
-        if (entry.MealPlanId != mealPlanId)
-            return Result.Fail("Entry does not belong to this meal plan");
+        entry.Servings = servings;
 
-        await _mealPlanRepository.UpdateEntryServingsAsync(mealPlanId, entryId, servings);
+        await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
 

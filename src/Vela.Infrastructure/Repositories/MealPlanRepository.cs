@@ -50,14 +50,4 @@ public class MealPlanRepository : Repository<MealPlan>, IMealPlanRepository
             .Include(mpe => mpe.Recipe)
             .FirstOrDefaultAsync(mpe => mpe.Id == entryId);
     }
-
-    public async Task UpdateEntryServingsAsync(Guid mealPlanId, Guid entryId, int servings)
-    {
-        var entry = await _context.MealPlanEntries.FindAsync(entryId);
-        if (entry != null && entry.MealPlanId == mealPlanId)
-        {
-            entry.Servings = servings;
-            await _context.SaveChangesAsync();
-        }
-    }
 }
