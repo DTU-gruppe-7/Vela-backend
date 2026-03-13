@@ -4,6 +4,7 @@ public class MealPlan
 {
     public Guid Id { get; set; }
     public required string UserId { get; set; }
+    public Guid? GroupId { get; set; }
     public required string Name { get; set; }
     public string? Description { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
