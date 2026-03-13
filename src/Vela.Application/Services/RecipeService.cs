@@ -70,4 +70,10 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
     {
         return await _recipeRepository.GetCategoriesAsync();
     }
+
+    public async Task<IEnumerable<RecipeSummaryDto>> GetMostLikedRecipesAsync(int limit = 20)
+    {
+        var recipes = await _recipeRepository.GetMostLikedRecipesAsync(limit);
+        return recipes.Select(r => FromEntity(r)).ToList();
+    }
 }

@@ -44,5 +44,14 @@ namespace Vela.API.Controllers
 			var categories = await _recipeService.GetCategoriesAsync();
 			return Ok(categories);
 		}
+
+		[AllowAnonymous]
+		[HttpGet("most-liked")]
+		public async Task<ActionResult<IEnumerable<RecipeSummaryDto>>> GetMostLikedRecipes(
+			[FromQuery] int limit = 20)
+		{
+			var recipes = await _recipeService.GetMostLikedRecipesAsync(limit);
+			return Ok(recipes);
+		}
 	}
 }
