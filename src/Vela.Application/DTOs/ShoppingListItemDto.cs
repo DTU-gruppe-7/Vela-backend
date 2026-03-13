@@ -3,9 +3,8 @@
 public class ShoppingListItemDto
 {
     public Guid Id { get; set; }
-    public Guid IngredientId { get; set; }
     public required string IngredientName { get; set; }
-    public required string UserId { get; set; }
+    public string? AssignedUserId { get; set; }
     public double Quantity { get; set; }
     public string? Unit { get; set; }
     public decimal? Price { get; set; }

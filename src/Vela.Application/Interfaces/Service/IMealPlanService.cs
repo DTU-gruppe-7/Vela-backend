@@ -1,4 +1,5 @@
 using Vela.Application.Common;
+using Vela.Application.DTOs;
 using Vela.Application.DTOs.MealPlan;
 
 namespace Vela.Application.Interfaces.Service;

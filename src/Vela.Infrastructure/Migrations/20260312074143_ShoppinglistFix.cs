@@ -1,4 +1,4 @@
-﻿    using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,16 +6,16 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Vela.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Sync : Migration
+    public partial class ShoppinglistFix : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<string>(
-                name: "UserId",
-                table: "ShoppingListItems",
-                type: "text",
-                nullable: false,
+            migrationBuilder.AlterColumn<Guid>(
+                name: "GroupId",
+                table: "ShoppingLists",
+                type: "uuid",
+                nullable: true,
                 oldClrType: typeof(Guid),
                 oldType: "uuid");
         }
@@ -24,12 +24,14 @@ namespace Vela.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<Guid>(
-                name: "UserId",
-                table: "ShoppingListItems",
+                name: "GroupId",
+                table: "ShoppingLists",
                 type: "uuid",
                 nullable: false,
-                oldClrType: typeof(string),
-                oldType: "text");
+                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"),
+                oldClrType: typeof(Guid),
+                oldType: "uuid",
+                oldNullable: true);
         }
     }
 }
