@@ -1,0 +1,127 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Vela.Application.DTOs.Group;
+using Vela.Application.Interfaces.Service;
+
+namespace Vela.API.Controllers;
+
+[Authorize]
+[ApiController]
+[Route("api/[controller]")]
+public class GroupController(IGroupService groupService, IGroupInviteService groupInviteService) : BaseApiController
+{
+    private readonly IGroupService _groupService = groupService;
+    private readonly IGroupInviteService _groupInviteService = groupInviteService;
+
+    [HttpGet]
+    public async Task<IActionResult> GetGroups()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _groupService.GetGroupsByUserIdAsync(userId);
+        return Ok(result.Data);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetGroup(Guid id)
+    {
+        var result = await _groupService.GetGroupAsync(id);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _groupService.CreateGroupAsync(userId, request);
+        return CreatedAtAction(nameof(GetGroup), new { id = result.Data!.Id }, result.Data);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteGroup(Guid id)
+    {
+        var result = await _groupService.DeleteGroupAsync(id);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Group deleted successfully" });
+    }
+
+    [HttpPost("{id}/members")]
+    public async Task<IActionResult> AddMember(Guid id, [FromBody] AddMemberRequest request)
+    {
+        var result = await _groupService.AddMemberAsync(id, request);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Member added successfully" });
+    }
+
+    [HttpDelete("{id}/members/{userId}")]
+    public async Task<IActionResult> RemoveMember(Guid id, string userId)
+    {
+        var result = await _groupService.RemoveMemberAsync(id, userId);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Member removed successfully" });
+    }
+
+    [HttpGet("{id}/matches")]
+    public async Task<IActionResult> GetMatches(Guid id)
+    {
+        var result = await _groupService.GetMatchesAsync(id);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
+    // Invites
+    [HttpPost("{id}/invites")]
+    public async Task<IActionResult> SendInvite(Guid id, [FromBody] string userId)
+    {
+        var result = await _groupInviteService.SendInviteAsync(id, userId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Invite sent successfully" });
+    }
+
+    [HttpGet("{id}/invites")]
+    public async Task<IActionResult> GetInvitesByGroup(Guid id)
+    {
+        var result = await _groupInviteService.GetInvitesByGroupIdAsync(id);
+        return Ok(result.Data);
+    }
+
+    [HttpPatch("invites/{inviteId}/accept")]
+    public async Task<IActionResult> AcceptInvite(Guid inviteId)
+    {
+        var result = await _groupInviteService.AcceptInviteAsync(inviteId);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Invite accepted" });
+    }
+
+    [HttpPatch("invites/{inviteId}/decline")]
+    public async Task<IActionResult> DeclineInvite(Guid inviteId)
+    {
+        var result = await _groupInviteService.DeclineInviteAsync(inviteId);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Invite declined" });
+    }
+
+    [HttpGet("invites")]
+    public async Task<IActionResult> GetMyInvites()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _groupInviteService.GetInvitesByUserIdAsync(userId);
+        return Ok(result.Data);
+    }
+}
