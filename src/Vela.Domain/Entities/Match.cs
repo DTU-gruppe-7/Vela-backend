@@ -1,6 +1,6 @@
 namespace Vela.Domain.Entities;
 
-public class GroupMatch
+public class Match
 {
     public Guid Id { get; set; }
     public Guid GroupId { get; set; }

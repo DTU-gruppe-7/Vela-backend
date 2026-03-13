@@ -20,7 +20,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Group> Groups => Set<Group>();
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
     public DbSet<GroupInvite> GroupInvites => Set<GroupInvite>();
-    public DbSet<GroupMatch> GroupMatches => Set<GroupMatch>();
+    public DbSet<Match> Matches => Set<Match>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -94,9 +94,6 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         // Group
         modelBuilder.Entity<Group>()
-            .HasKey(g => g.Id);
-
-        modelBuilder.Entity<Group>()
             .HasMany(g => g.Members)
             .WithOne()
             .HasForeignKey(gm => gm.GroupId)
@@ -104,25 +101,28 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         // GroupMember
         modelBuilder.Entity<GroupMember>()
-            .HasKey(gm => gm.Id);
-
-        modelBuilder.Entity<GroupMember>()
             .HasIndex(gm => new { gm.GroupId, gm.UserId })
             .IsUnique();
 
         // GroupInvite
         modelBuilder.Entity<GroupInvite>()
-            .HasKey(gi => gi.Id);
-
-        modelBuilder.Entity<GroupInvite>()
             .HasIndex(gi => new { gi.GroupId, gi.UserId });
 
-        // GroupMatch
-        modelBuilder.Entity<GroupMatch>()
-            .HasKey(gm => gm.Id);
+        // Match
+        modelBuilder.Entity<Match>()
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(m => m.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<GroupMatch>()
-            .HasIndex(gm => new { gm.GroupId, gm.RecipeId })
+        modelBuilder.Entity<Match>()
+            .HasOne<Recipe>()
+            .WithMany()
+            .HasForeignKey(m => m.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Match>()
+            .HasIndex(m => new { m.GroupId, m.RecipeId })
             .IsUnique();
     }
 }
