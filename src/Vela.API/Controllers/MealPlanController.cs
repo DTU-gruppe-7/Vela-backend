@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.Interfaces.Service;
@@ -78,4 +78,15 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
 
         return Ok(new { message = "Recipe removed from meal plan successfully" });
     }
+    
+    [HttpPut("{mealPlanId}/entries/{entryId}")]
+    public async Task<IActionResult> UpdateMealPlanEntryServings(Guid mealPlanId, Guid entryId, [FromBody] UpdateMealPlanEntryServingsRequest request)
+    {
+        var result = await _mealPlanService.UpdateMealPlanEntryServingsAsync(mealPlanId, entryId, request.Servings);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Meal plan entry servings updated successfully" });
+    }
+    
 }

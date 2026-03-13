@@ -1,4 +1,4 @@
-﻿using Vela.Application.Common;
+using Vela.Application.Common;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
@@ -116,6 +116,18 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             return Result.Fail("Entry does not belong to this meal plan");
 
         await _mealPlanRepository.RemoveEntryAsync(entryId);
+        await _mealPlanRepository.SaveChangesAsync();
+        return Result.Ok();
+    }
+
+    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int servings)
+    {
+        var entry = await _mealPlanRepository.GetEntryAsync(entryId);
+        if (entry == null)
+            return Result.Fail($"Meal plan entry with ID {entryId} not found");
+
+        entry.Servings = servings;
+
         await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
