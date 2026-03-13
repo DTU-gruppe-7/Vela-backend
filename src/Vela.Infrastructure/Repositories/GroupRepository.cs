@@ -16,6 +16,16 @@ public class GroupRepository(AppDbContext context) : Repository<Group>(context),
         throw new NotImplementedException();
     }
 
+    public Task AddMemberAsync(GroupMember member)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RemoveMemberAsync(Guid groupId, string userId)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task<GroupMember?> GetMemberAsync(Guid groupId, string userId)
     {
         throw new NotImplementedException();
