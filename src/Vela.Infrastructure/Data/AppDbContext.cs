@@ -111,7 +111,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
         // Match
         modelBuilder.Entity<Match>()
             .HasOne<Group>()
-            .WithMany()
+            .WithMany(g => g.Matches)
             .HasForeignKey(m => m.GroupId)
             .OnDelete(DeleteBehavior.Cascade);
 
