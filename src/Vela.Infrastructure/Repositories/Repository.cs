@@ -12,7 +12,6 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : clas
     public virtual async Task AddAsync(T entity)
     {
         await _dbSet.AddAsync(entity);
-        await _context.SaveChangesAsync();
     }
 
     public virtual async Task<T?> GetByUuidAsync(Guid uuid)
@@ -28,7 +27,6 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : clas
     public virtual async Task UpdateAsync(T entity)
     {
         _context.Entry(entity).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
     }
 
     public virtual async Task DeleteAsync(Guid uuid)
@@ -36,7 +34,6 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : clas
         var entity = await GetByUuidAsync(uuid);
         if (entity == null) return;
         _dbSet.Remove(entity);
-        await _context.SaveChangesAsync();
     }
 
     public virtual async Task<bool> ExistsAsync(Guid uuid)

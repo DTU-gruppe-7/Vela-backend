@@ -17,6 +17,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
     public DbSet<MealPlan> MealPlans => Set<MealPlan>();
     public DbSet<MealPlanEntry> MealPlanEntries => Set<MealPlanEntry>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
+    public DbSet<GroupInvite> GroupInvites => Set<GroupInvite>();
+    public DbSet<Match> Matches => Set<Match>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,17 +50,12 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         modelBuilder.Entity<ShoppingList>()
             .HasMany(sl => sl.Items)
-            .WithOne(i => i.ShoppingList)
+            .WithOne()
             .HasForeignKey(i => i.ShoppingListId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<ShoppingListItem>()
             .HasKey(si => si.Id);
-
-        modelBuilder.Entity<ShoppingListItem>()
-            .HasOne(si => si.Ingredient)
-            .WithMany()
-            .HasForeignKey(si => si.IngredientId);
 
         // MealPlanEntry configuration
         modelBuilder.Entity<MealPlanEntry>()
@@ -79,7 +78,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasIndex(mpe => mpe.MealPlanId);
 
         modelBuilder.Entity<MealPlanEntry>()
-            .HasIndex(mpe => new { mpe.MealPlanId, mpe.Day, mpe.MealType });
+            .HasIndex(mpe => new { mpe.MealPlanId, mpe.Date, mpe.MealType });
 
         // MealPlan relationship with AppUser
         modelBuilder.Entity<MealPlan>()
@@ -92,5 +91,44 @@ public class AppDbContext : IdentityDbContext<AppUser>
         // Index for hurtig opslag på UserId
         modelBuilder.Entity<MealPlan>()
             .HasIndex(mp => mp.UserId);
+
+        // Group
+        modelBuilder.Entity<Group>()
+            .HasMany(g => g.Members)
+            .WithOne()
+            .HasForeignKey(gm => gm.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // GroupMember
+        modelBuilder.Entity<GroupMember>()
+            .HasIndex(gm => new { gm.GroupId, gm.UserId })
+            .IsUnique();
+
+        // GroupInvite
+        modelBuilder.Entity<GroupInvite>()
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(gi => gi.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GroupInvite>()
+            .HasIndex(gi => new { gi.GroupId, gi.UserId });
+
+        // Match
+        modelBuilder.Entity<Match>()
+            .HasOne<Group>()
+            .WithMany(g => g.Matches)
+            .HasForeignKey(m => m.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Match>()
+            .HasOne<Recipe>()
+            .WithMany()
+            .HasForeignKey(m => m.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Match>()
+            .HasIndex(m => new { m.GroupId, m.RecipeId })
+            .IsUnique();
     }
 }

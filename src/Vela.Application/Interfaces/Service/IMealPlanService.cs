@@ -1,4 +1,5 @@
-﻿using Vela.Application.Common;
+using Vela.Application.Common;
+using Vela.Application.DTOs;
 using Vela.Application.DTOs.MealPlan;
 
 namespace Vela.Application.Interfaces.Service;
@@ -13,5 +14,6 @@ public interface IMealPlanService
     Task<Result> DeleteMealPlanAsync(Guid mealPlanId);
     Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request);
     Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId);
+    Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int servings);
     Task<Result<MealPlanDto>> GetMealPlanWithEntriesAsync(Guid mealPlanId);
 }
