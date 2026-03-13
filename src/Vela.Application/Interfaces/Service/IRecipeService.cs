@@ -9,4 +9,5 @@ public interface IRecipeService
     Task<RecipeDto?> GetRecipeByIdAsync(Guid recipeId);
     Task<IEnumerable<RecipeSummaryDto>> GetNextRecipesAsync(string userId, int limit, string? category = null);
     Task<IEnumerable<string>> GetCategoriesAsync();
+    Task<IEnumerable<RecipeSummaryDto>> GetMostLikedRecipesAsync(int limit = 20);
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities;
+using Vela.Domain.Enums;
 using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
@@ -75,6 +76,33 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
             .Select(r => r.Category!)
             .Distinct()
             .OrderBy(c => c)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Recipe>> GetMostLikedRecipesAsync(int limit = 20)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+
+        return await _context.Set<SwipeRecipe>()
+            .Where(sr => sr.Direction == SwipeDirection.Like)
+            .GroupBy(sr => sr.RecipeId)
+            .OrderByDescending(g => g.Count())
+            .ThenBy(g => g.Key)
+            .Take(limit)
+            .Join(_dbSet,
+                g => g.Key,
+                r => r.Id,
+                (g, r) => new Recipe
+                {
+                    Id = r.Id,
+                    Name = r.Name,
+                    Category = r.Category,
+                    ThumbnailUrl = r.ThumbnailUrl,
+                    WorkTime = r.WorkTime,
+                    TotalTime = r.TotalTime,
+                    KeywordsJson = r.KeywordsJson
+                })
+            .AsNoTracking()
             .ToListAsync();
     }
 }
