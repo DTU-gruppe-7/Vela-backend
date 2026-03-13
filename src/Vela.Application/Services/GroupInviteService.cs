@@ -39,7 +39,17 @@ public class GroupInviteService(
         if (invite == null)
             return Result.Fail($"Invite with ID {inviteId} not found");
 
+        var member = new GroupMember
+        {
+            Id = Guid.NewGuid(),
+            GroupId = invite.GroupId,
+            UserId = invite.UserId,
+            Role = "Member",
+            JoinedAt = DateTimeOffset.UtcNow
+        };
+
         await _groupInviteRepository.UpdateStatusAsync(inviteId, "Accepted");
+        await _groupRepository.AddMemberAsync(member);
         await _groupInviteRepository.SaveChangesAsync();
         return Result.Ok();
     }

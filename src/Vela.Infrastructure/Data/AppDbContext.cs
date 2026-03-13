@@ -106,6 +106,12 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         // GroupInvite
         modelBuilder.Entity<GroupInvite>()
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(gi => gi.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GroupInvite>()
             .HasIndex(gi => new { gi.GroupId, gi.UserId });
 
         // Match

@@ -44,7 +44,17 @@ public class GroupService(
             CreatedAt = DateTimeOffset.UtcNow
         };
 
+        var owner = new GroupMember
+        {
+            Id = Guid.NewGuid(),
+            GroupId = group.Id,
+            UserId = userId,
+            Role = "Owner",
+            JoinedAt = DateTimeOffset.UtcNow
+        };
+
         await _groupRepository.AddAsync(group);
+        await _groupRepository.AddMemberAsync(owner);
         await _mealPlanRepository.AddAsync(mealPlan);
         await _shoppingListRepository.AddAsync(shoppingList);
         await _groupRepository.SaveChangesAsync();

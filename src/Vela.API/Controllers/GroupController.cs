@@ -81,9 +81,9 @@ public class GroupController(IGroupService groupService, IGroupInviteService gro
 
     // Invites
     [HttpPost("{id}/invites")]
-    public async Task<IActionResult> SendInvite(Guid id, [FromBody] string userId)
+    public async Task<IActionResult> SendInvite(Guid id, [FromBody] SendInviteRequest request)
     {
-        var result = await _groupInviteService.SendInviteAsync(id, userId);
+        var result = await _groupInviteService.SendInviteAsync(id, request.UserId);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 

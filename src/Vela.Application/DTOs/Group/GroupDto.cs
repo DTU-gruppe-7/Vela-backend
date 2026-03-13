@@ -1,5 +1,3 @@
-using Vela.Application.DTOs.MealPlan;
-
 namespace Vela.Application.DTOs.Group;
 
 public class GroupDto
@@ -10,5 +8,4 @@ public class GroupDto
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
     public List<GroupMemberDto> Members { get; set; } = new();
-    public MealPlanDto? MealPlan { get; set; }
 }
