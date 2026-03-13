@@ -17,6 +17,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
     public DbSet<MealPlan> MealPlans => Set<MealPlan>();
     public DbSet<MealPlanEntry> MealPlanEntries => Set<MealPlanEntry>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
+    public DbSet<GroupInvite> GroupInvites => Set<GroupInvite>();
+    public DbSet<GroupMatch> GroupMatches => Set<GroupMatch>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -87,5 +91,38 @@ public class AppDbContext : IdentityDbContext<AppUser>
         // Index for hurtig opslag på UserId
         modelBuilder.Entity<MealPlan>()
             .HasIndex(mp => mp.UserId);
+
+        // Group
+        modelBuilder.Entity<Group>()
+            .HasKey(g => g.Id);
+
+        modelBuilder.Entity<Group>()
+            .HasMany(g => g.Members)
+            .WithOne()
+            .HasForeignKey(gm => gm.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // GroupMember
+        modelBuilder.Entity<GroupMember>()
+            .HasKey(gm => gm.Id);
+
+        modelBuilder.Entity<GroupMember>()
+            .HasIndex(gm => new { gm.GroupId, gm.UserId })
+            .IsUnique();
+
+        // GroupInvite
+        modelBuilder.Entity<GroupInvite>()
+            .HasKey(gi => gi.Id);
+
+        modelBuilder.Entity<GroupInvite>()
+            .HasIndex(gi => new { gi.GroupId, gi.UserId });
+
+        // GroupMatch
+        modelBuilder.Entity<GroupMatch>()
+            .HasKey(gm => gm.Id);
+
+        modelBuilder.Entity<GroupMatch>()
+            .HasIndex(gm => new { gm.GroupId, gm.RecipeId })
+            .IsUnique();
     }
 }
