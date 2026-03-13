@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Vela.Infrastructure.Data;
@@ -11,9 +12,11 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260313092201_AddGroupTables")]
+    partial class AddGroupTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -207,6 +210,29 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("GroupInvites");
                 });
 
+            modelBuilder.Entity("Vela.Domain.Entities.GroupMatch", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("GroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("MatchedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RecipeId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GroupId", "RecipeId")
+                        .IsUnique();
+
+                    b.ToTable("GroupMatches");
+                });
+
             modelBuilder.Entity("Vela.Domain.Entities.GroupMember", b =>
                 {
                     b.Property<Guid>("Id")
@@ -264,31 +290,6 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("Ingredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.Match", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("GroupId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("MatchedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("RecipeId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RecipeId");
-
-                    b.HasIndex("GroupId", "RecipeId")
-                        .IsUnique();
-
-                    b.ToTable("Matches");
-                });
-
             modelBuilder.Entity("Vela.Domain.Entities.MealPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -300,9 +301,6 @@ namespace Vela.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
-
-                    b.Property<Guid?>("GroupId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -680,35 +678,11 @@ namespace Vela.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.GroupInvite", b =>
-                {
-                    b.HasOne("Vela.Domain.Entities.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Vela.Domain.Entities.GroupMember", b =>
                 {
                     b.HasOne("Vela.Domain.Entities.Group", null)
                         .WithMany("Members")
                         .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Vela.Domain.Entities.Match", b =>
-                {
-                    b.HasOne("Vela.Domain.Entities.Group", null)
-                        .WithMany("Matches")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Vela.Domain.Entities.Recipe", null)
-                        .WithMany()
-                        .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -782,8 +756,6 @@ namespace Vela.Infrastructure.Migrations
 
             modelBuilder.Entity("Vela.Domain.Entities.Group", b =>
                 {
-                    b.Navigation("Matches");
-
                     b.Navigation("Members");
                 });
 
