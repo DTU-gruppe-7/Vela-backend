@@ -24,26 +24,7 @@ public class GroupService(
             Status = "Active",
             CreatedAt = DateTimeOffset.UtcNow
         };
-
-        var mealPlan = new MealPlan
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            GroupId = group.Id,
-            Name = $"{request.Name}'s madplan",
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
-
-        var shoppingList = new ShoppingList
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            GroupId = group.Id,
-            Name = $"{request.Name}'s indkøbsliste",
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-
+        
         var owner = new GroupMember
         {
             Id = Guid.NewGuid(),
@@ -55,8 +36,6 @@ public class GroupService(
 
         await _groupRepository.AddAsync(group);
         await _groupRepository.AddMemberAsync(owner);
-        await _mealPlanRepository.AddAsync(mealPlan);
-        await _shoppingListRepository.AddAsync(shoppingList);
         await _groupRepository.SaveChangesAsync();
 
         return Result<GroupDto>.Ok(MapToDto(group));

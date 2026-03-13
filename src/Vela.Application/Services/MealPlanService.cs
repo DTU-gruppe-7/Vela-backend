@@ -12,37 +12,48 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IRecipeRepository _recipeRepository  = recipeRepository;
 
-    public async Task<Result<MealPlanDto>> GetMealPlanAsync(Guid mealPlanId)
+    public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId)
     {
-        var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
-        if (mealPlan == null)
-            return Result<MealPlanDto>.Fail($"Meal plan with ID {mealPlanId} not found");
+        var hasUserId = !string.IsNullOrWhiteSpace(userId);
+        var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
+        
+        if (hasUserId == hasGroupId)
+            return Result<MealPlanDto>.Fail("Mealplan must belong to either a user or a group");
+
+        var mealPlan = new MealPlan();
+
+        if (hasUserId)
+        {
+            mealPlan = await _mealPlanRepository.GetByUserIdAsync(userId);
+            if (mealPlan == null)
+                return Result<MealPlanDto>.Fail($"Meal plan with userID {userId} not found");
+        }
+        else
+        {
+            Guid foundgroupId = groupId ??Guid.Empty;
+            mealPlan = await _mealPlanRepository.GetByGroupIdAsync(foundgroupId);
+            if (mealPlan == null)
+                return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found");
+        }
 
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan, new List<MealPlanEntry>()));
     }
-
-    public async Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansAsync()
+    
+    public async Task<Result<MealPlanDto>> CreateMealPlanAsync(string? userId, Guid? groupId, string name)
     {
-        var mealPlans = await _mealPlanRepository.GetAllAsync();
-        var dtos = mealPlans.Select(mp => MapToDto(mp, mp.Entries)).ToList();
-        return Result<IEnumerable<MealPlanDto>>.Ok(dtos);
-    }
-
-    public async Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansByUserAsync(string userId)
-    {
-        var mealPlans = await _mealPlanRepository.GetByUserIdAsync(userId);
-        var dtos = mealPlans.Select(mp => MapToDto(mp, mp.Entries)).ToList();
-        return Result<IEnumerable<MealPlanDto>>.Ok(dtos);
-    }
-
-    public async Task<Result<MealPlanDto>> CreateMealPlanAsync(string userId, string name, string? description = null)
-    {
+        var hasUserId = !string.IsNullOrWhiteSpace(userId);
+        var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
+        
+        if (hasUserId == hasGroupId)
+            return Result<MealPlanDto>.Fail("Mealplan must belong to either a user or a group. Not both or none");
+        
         var mealPlan = new MealPlan
         {
             Id = Guid.NewGuid(),
             UserId = userId,
+            GroupId = groupId,
             Name = name,
-            Description = description,
+            Description = String.Empty,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
@@ -61,8 +72,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         mealPlan.Name = name;
         mealPlan.Description = description;
         mealPlan.UpdatedAt = DateTimeOffset.UtcNow;
-
-        await _mealPlanRepository.UpdateAsync(mealPlan);
+        
         await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
@@ -100,6 +110,8 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             Servings = request.Servings,
             AddedAt = DateTimeOffset.UtcNow
         };
+        
+        mealPlan.Entries.Add(entry);
 
         await _mealPlanRepository.AddEntryAsync(entry);
         await _mealPlanRepository.SaveChangesAsync();

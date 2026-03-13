@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.Interfaces.Service;
+using Vela.Infrastructure.Migrations;
 
 namespace Vela.API.Controllers;
 
@@ -13,29 +14,23 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
     private readonly IMealPlanService _mealPlanService = mealPlanService;
 
     [HttpGet]
-    public async Task<IActionResult> GetAllMealPlans()
+    public async Task<ActionResult<MealPlanDto>> GetMealPlan([FromQuery] Guid groupId)
     {
-        var userId = GetCurrentUserId();
-        var result = await _mealPlanService.GetAllMealPlansByUserAsync(userId);
-        return Ok(result.Data);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetMealPlan(Guid id)
-    {
-        var result = await _mealPlanService.GetMealPlanWithEntriesAsync(id);
-        if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
-        return Ok(result.Data);
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateMealPlan([FromBody] CreateMealPlanRequest request)
-    {
-        var userId = GetCurrentUserId();
-        var result = await _mealPlanService.CreateMealPlanAsync(userId, request.Name, request.Description);
-        return CreatedAtAction(nameof(GetMealPlan), new { id = result.Data!.Id }, result.Data);
+        if (groupId.Equals(Guid.Empty))
+        {
+            var currentUserID = GetCurrentUserId();
+            var result = await _mealPlanService.GetMealPlanAsync(currentUserID, null);
+            if (!result.Success)
+                return NotFound(new { message = result.ErrorMessage });
+            return Ok(result.Data);
+        }
+        else
+        {
+            var result = await _mealPlanService.GetMealPlanAsync(null, groupId);
+            if (!result.Success)
+                return NotFound(new { message = result.ErrorMessage });
+            return Ok(result.Data);
+        }
     }
 
     [HttpPut("{id}")]

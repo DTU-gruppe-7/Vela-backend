@@ -6,10 +6,8 @@ namespace Vela.Application.Interfaces.Service;
 
 public interface IMealPlanService
 {
-    Task<Result<MealPlanDto>> GetMealPlanAsync(Guid mealPlanId);
-    Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansAsync();
-    Task<Result<IEnumerable<MealPlanDto>>> GetAllMealPlansByUserAsync(string userId);
-    Task<Result<MealPlanDto>> CreateMealPlanAsync(string userId, string name, string? description = null);
+    Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId);
+    Task<Result<MealPlanDto>> CreateMealPlanAsync(string? userId, Guid? groupId, string name);
     Task<Result> UpdateMealPlanAsync(Guid mealPlanId, string name, string? description);
     Task<Result> DeleteMealPlanAsync(Guid mealPlanId);
     Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request);

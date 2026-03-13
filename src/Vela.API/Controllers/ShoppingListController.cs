@@ -14,27 +14,24 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     private readonly IShoppingListService _shoppingListService = shoppingListService;
 
     [HttpGet]
-    public async Task<ActionResult<List<ShoppingListSummaryDto>>> GetAll()
+    public async Task<ActionResult<List<ShoppingListDto>>> GetShoppingList([FromQuery] Guid groupId)
     {
-        var shoppingList = await _shoppingListService.GetAllShoppingListsAsync();
-        return Ok(shoppingList);
-    }
+        if (groupId.Equals(Guid.Empty))
+        {
+            var curentUserId = GetCurrentUserId();
+            var result = await _shoppingListService.GetShoppingListAsync(curentUserId, null);
+            if (!result.Success)
+                return NotFound(new { message = result.ErrorMessage });
+            return Ok(result.Data);
+        }
+        else
+        {
+            var result = await _shoppingListService.GetShoppingListAsync(null, groupId);
+            if (!result.Success)
+                return NotFound(new { message = result.ErrorMessage });
+            return Ok(result.Data);
+        }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<ShoppingListDto?>> GetShoppingListById(Guid id)
-    {
-        var shoppingList = await _shoppingListService.GetShoppingListById(id);
-        if (shoppingList == null)
-            return NotFound();
-        return Ok(shoppingList);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<ShoppingListDto>> Create([FromBody] CreateShoppingListDto dto)
-    {
-        var userId = GetCurrentUserId();
-        var shoppingList = await _shoppingListService.CreateShoppingListAsync(userId, dto);
-        return CreatedAtAction(nameof(GetShoppingListById), new { id = shoppingList.Id }, shoppingList);
     }
     
     [HttpPatch("{id}")]
@@ -47,16 +44,6 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         return Ok(result.Data);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteShoppingList(Guid id)
-    {
-        var result = await _shoppingListService.DeleteShoppingListAsync(id);
-        if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
-        return NoContent();
-    }
-
     [HttpPost("{id}/items")]
     public async Task<ActionResult<ShoppingListItemDto>> AddItem(Guid id, [FromBody] AddShoppingListItemDto dto)
     {
@@ -66,7 +53,7 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 
-        return CreatedAtAction(nameof(GetShoppingListById), new { id }, result.Data);
+        return Ok(result.Data);
     }
 
     
