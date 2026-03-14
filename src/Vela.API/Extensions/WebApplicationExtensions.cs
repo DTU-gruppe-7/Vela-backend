@@ -12,10 +12,6 @@ public static class WebApplicationExtensions
             app.MapOpenApi();
             app.MapScalarApiReference();
         }
-        else
-        {
-            app.UseHttpsRedirection();
-        }
         
         app.UseIpRateLimiting();
         
