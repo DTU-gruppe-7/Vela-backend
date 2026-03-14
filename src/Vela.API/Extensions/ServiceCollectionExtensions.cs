@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.OpenApi;
+using AspNetCoreRateLimit;
 using Microsoft.OpenApi;
 
 namespace Vela.API.Extensions;
@@ -82,6 +82,19 @@ public static class ServiceCollectionExtensions
                 }
             });
         });
+        
+        // --- RATE LIMITING OPSÆTNING ---
+        // 1. Tilføj Memory Cache (nødvendigt for at gemme anmodningstællere)
+        services.AddMemoryCache();
+
+        // 2. Indlæs konfigurationen fra appsettings.json
+        services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
+
+        // 3. Tilføj in-memory lagring af tællere og regler
+        services.AddInMemoryRateLimiting();
+
+        // 4. Registrer standard konfigurationen for rate limiting
+        services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         
         return services;
     }

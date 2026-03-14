@@ -1,4 +1,5 @@
-﻿using Scalar.AspNetCore;
+﻿using AspNetCoreRateLimit;
+using Scalar.AspNetCore;
 
 namespace Vela.API.Extensions;
 
@@ -15,6 +16,8 @@ public static class WebApplicationExtensions
         {
             app.UseHttpsRedirection();
         }
+        
+        app.UseIpRateLimiting();
         
         app.UseCors("AllowFrontend");
         
