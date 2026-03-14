@@ -1,4 +1,7 @@
-﻿namespace Vela.API.Extensions;
+﻿using AspNetCoreRateLimit;
+using Scalar.AspNetCore;
+
+namespace Vela.API.Extensions;
 
 public static class WebApplicationExtensions
 {
@@ -6,13 +9,21 @@ public static class WebApplicationExtensions
     {
         if (app.Environment.IsDevelopment())
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            app.MapOpenApi();
+            app.MapScalarApiReference();
         }
-
-        app.UseHttpsRedirection();
+        else
+        {
+            app.UseHttpsRedirection();
+        }
+        
+        app.UseIpRateLimiting();
+        
+        app.UseCors("AllowFrontend");
+        
         app.UseAuthentication();
         app.UseAuthorization();
+        
         app.MapControllers();
         
         return app;

@@ -3,11 +3,11 @@ using Vela.API.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddPresentation()
+    .AddPresentation(builder.Configuration)
     .AddInfrastructure(builder.Configuration);
     
-    var app = builder.Build();
+var app = builder.Build();
     
-    app.ConfigurePipeline();
+app.ConfigurePipeline();
     
-    app.Run();
+app.Run();

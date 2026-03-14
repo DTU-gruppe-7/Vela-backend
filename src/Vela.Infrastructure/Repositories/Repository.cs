@@ -4,21 +4,14 @@ using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
 
-public class Repository<T> : IRepository<T> where T : class
+public class Repository<T>(AppDbContext context) : IRepository<T> where T : class
 {
-    protected readonly AppDbContext _context;
-    protected readonly DbSet<T> _dbSet;
-    
-    public Repository(AppDbContext context)
-    {
-        _context = context;
-        _dbSet = context.Set<T>();
-    }
+    protected readonly AppDbContext _context = context;
+    protected readonly DbSet<T> _dbSet = context.Set<T>();
     
     public virtual async Task AddAsync(T entity)
     {
         await _dbSet.AddAsync(entity);
-        await _context.SaveChangesAsync();
     }
 
     public virtual async Task<T?> GetByUuidAsync(Guid uuid)
@@ -34,17 +27,22 @@ public class Repository<T> : IRepository<T> where T : class
     public virtual async Task UpdateAsync(T entity)
     {
         _context.Entry(entity).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
     }
 
     public virtual async Task DeleteAsync(Guid uuid)
     {
-        _dbSet.Remove(_dbSet.Find(uuid));
-        await _context.SaveChangesAsync();
+        var entity = await GetByUuidAsync(uuid);
+        if (entity == null) return;
+        _dbSet.Remove(entity);
     }
 
     public virtual async Task<bool> ExistsAsync(Guid uuid)
     {
         return await _dbSet.FindAsync(uuid) != null;
+    }
+
+    public virtual async Task SaveChangesAsync()
+    {
+        await _context.SaveChangesAsync();
     }
 }

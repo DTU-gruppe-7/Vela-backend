@@ -1,22 +1,161 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Vela.Domain.Entities;
+using Vela.Infrastructure.Identity;
 
 namespace Vela.Infrastructure.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser>(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-    
     public DbSet<Recipe> Recipes => Set<Recipe>();
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
     public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
+    public DbSet<Like> Likes => Set<Like>();
+    public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
+    public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
+    public DbSet<MealPlan> MealPlans => Set<MealPlan>();
+    public DbSet<MealPlanEntry> MealPlanEntries => Set<MealPlanEntry>();
+    public DbSet<Group> Groups => Set<Group>();
+    public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
+    public DbSet<GroupInvite> GroupInvites => Set<GroupInvite>();
+    public DbSet<Match> Matches => Set<Match>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         
-        // Sammensat nøgle til RecipeIngredient (Mange-til-mange)
+        // RecipeIngredient bruger sit eget Id som PK
         modelBuilder.Entity<RecipeIngredient>()
-            .HasKey(ri => new { ri.RecipeId, ri.IngredientId });
+            .HasKey(ri => ri.Id);
+
+        // Index for hurtig opslag på Recipe + Ingredient
+        modelBuilder.Entity<RecipeIngredient>()
+            .HasIndex(ri => new { ri.RecipeId, ri.IngredientId });
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.Name)
+            .IsUnique();
+        
+        modelBuilder.Entity<Like>()
+            .HasKey(s => s.LikeId);
+
+        modelBuilder.Entity<Like>()
+            .HasIndex(s => new { s.UserId,  s.RecipeId })
+            .IsUnique();
+        
+        // ShoppingList -> AppUser (optional relationship)
+        modelBuilder.Entity<ShoppingList>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(sl => sl.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // ShoppingList -> Group (optional relationship)
+        modelBuilder.Entity<ShoppingList>()
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(sl => sl.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // Index for hurtig opslag på UserId
+        modelBuilder.Entity<ShoppingList>()
+            .HasIndex(sl => sl.UserId);
+        
+        // Index for hurtig opslag på GroupId
+        modelBuilder.Entity<ShoppingList>()
+            .HasIndex(sl => sl.GroupId);
+
+        modelBuilder.Entity<ShoppingListItem>()
+            .HasOne<ShoppingList>()
+            .WithMany(sl => sl.Items)
+            .HasForeignKey(sl => sl.ShoppingListId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // MealPlanEntry configuration
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasKey(mpe => mpe.Id);
+
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasOne(mpe => mpe.MealPlan)
+            .WithMany(mp => mp.Entries)
+            .HasForeignKey(mpe => mpe.MealPlanId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasOne(mpe => mpe.Recipe)
+            .WithMany()
+            .HasForeignKey(mpe => mpe.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Index for hurtig opslag
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasIndex(mpe => mpe.MealPlanId);
+
+        modelBuilder.Entity<MealPlanEntry>()
+            .HasIndex(mpe => new { mpe.MealPlanId, mpe.Date, mpe.MealType });
+
+        // MealPlan -> AppUser (optional relationship)
+        modelBuilder.Entity<MealPlan>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(mp => mp.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // MealPlan -> Group (optional relationship)
+        modelBuilder.Entity<MealPlan>()
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(mp => mp.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Index for hurtig opslag på UserId
+        modelBuilder.Entity<MealPlan>()
+            .HasIndex(mp => mp.UserId);
+        
+        // Index for hurtig opslag på GroupId
+        modelBuilder.Entity<MealPlan>()
+            .HasIndex(mp => mp.GroupId);
+
+        // Group
+        modelBuilder.Entity<Group>()
+            .HasMany(g => g.Members)
+            .WithOne()
+            .HasForeignKey(gm => gm.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // GroupMember
+        modelBuilder.Entity<GroupMember>()
+            .HasKey(gm => new { gm.GroupId, gm.UserId });
+
+        // GroupInvite
+        modelBuilder.Entity<GroupInvite>()
+            .HasOne<Group>()
+            .WithMany()
+            .HasForeignKey(gi => gi.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<GroupInvite>()
+            .HasKey(gi => new { gi.GroupId, gi.UserId });
+        
+        //GroupRole enum
+        modelBuilder.Entity<GroupMember>()
+            .Property(gm => gm.Role)
+            .HasConversion<string>();
+
+        // Match
+        modelBuilder.Entity<Match>()
+            .HasKey(m => new { m.GroupId, m.RecipeId });
+
+        modelBuilder.Entity<Match>()
+            .HasOne<Group>()
+            .WithMany(g => g.Matches)
+            .HasForeignKey(m => m.GroupId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Match>()
+            .HasOne<Recipe>()
+            .WithMany()
+            .HasForeignKey(m => m.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
