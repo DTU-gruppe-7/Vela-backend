@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Service;
+using Vela.Infrastructure.Identity;
 
 namespace Vela.API.Controllers;
 
@@ -12,12 +14,14 @@ public class GroupController(
     IGroupService groupService, 
     IGroupInviteService groupInviteService, 
     IShoppingListService shoppingListService, 
-    IMealPlanService mealPlanService) : BaseApiController
+    IMealPlanService mealPlanService,
+    UserManager<AppUser> userManager) : BaseApiController
 {
     private readonly IGroupService _groupService = groupService;
     private readonly IGroupInviteService _groupInviteService = groupInviteService;
     private readonly IMealPlanService _mealPlanService = mealPlanService;
     private readonly IShoppingListService _shoppingListService = shoppingListService;
+    private readonly UserManager<AppUser> _userManager = userManager;
     
 
     [HttpGet]
@@ -112,7 +116,18 @@ public class GroupController(
     [HttpPost("{id}/invites")]
     public async Task<IActionResult> SendInvite(Guid id, [FromBody] SendInviteRequest request)
     {
-        var result = await _groupInviteService.SendInviteAsync(request.UserId, id);
+        var user = await  _userManager.FindByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return NotFound(new { message = "Der findes ingen bruger med denne e-mail adresse." });
+        }
+        
+        var existingInvites = await _groupInviteService.GetInvitesByGroupIdAsync(id);
+        if (existingInvites.Data != null && existingInvites.Data.Any(i => i.UserId == user.Id))
+        {
+            return BadRequest(new { message = "Der er allerede sendt en invitation til denne bruger for denne gruppe." });
+        }
+        var result = await _groupInviteService.SendInviteAsync(user.Id, id);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 
