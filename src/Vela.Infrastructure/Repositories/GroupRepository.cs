@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities;
 using Vela.Infrastructure.Data;
@@ -6,33 +7,25 @@ namespace Vela.Infrastructure.Repositories;
 
 public class GroupRepository(AppDbContext context) : Repository<Group>(context), IGroupRepository
 {
-    public Task<Group?> GetGroupWithMembersAsync(Guid groupId)
+    public async Task<Group?> GetGroupWithMembersAsync(Guid groupId)
     {
-        throw new NotImplementedException();
+        return await _context.Groups
+            .Include(g => g.Members)
+            .FirstOrDefaultAsync(g => g.Id == groupId);
     }
 
-    public Task<IEnumerable<Group>> GetGroupsByUserIdAsync(string userId)
+    public async Task<IEnumerable<Group?>> GetGroupsByUserIdAsync(string userId)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task AddMemberAsync(GroupMember member)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task RemoveMemberAsync(Guid groupId, string userId)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<GroupMember?> GetMemberAsync(Guid groupId, string userId)
-    {
-        throw new NotImplementedException();
+        return await _context.Groups
+            .Include(g => g.Members)
+            .Where(g => g.Members.Any(m => m.UserId == userId))
+            .ToListAsync();
     }
     
-    public Task<IEnumerable<Match>> GetMatchesByGroupIdAsync(Guid groupId)
+    public async Task<IEnumerable<Match?>> GetMatchesByGroupIdAsync(Guid groupId)
     {
-        throw new NotImplementedException();
+        return await  _context.Matches
+            .Where(g => g.GroupId == groupId)
+            .ToListAsync();
     }
 }

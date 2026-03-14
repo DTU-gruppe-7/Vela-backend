@@ -112,7 +112,7 @@ public class GroupController(
     [HttpPost("{id}/invites")]
     public async Task<IActionResult> SendInvite(Guid id, [FromBody] SendInviteRequest request)
     {
-        var result = await _groupInviteService.SendInviteAsync(id, request.UserId);
+        var result = await _groupInviteService.SendInviteAsync(request.UserId, id);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 
@@ -126,20 +126,22 @@ public class GroupController(
         return Ok(result.Data);
     }
 
-    [HttpPatch("invites/{inviteId}/accept")]
-    public async Task<IActionResult> AcceptInvite(Guid inviteId)
+    [HttpPatch("invites/{groupId}/accept")]
+    public async Task<IActionResult> AcceptInvite(Guid groupId)
     {
-        var result = await _groupInviteService.AcceptInviteAsync(inviteId);
+        var userId = GetCurrentUserId();
+        var result = await _groupInviteService.AcceptInviteAsync(userId, groupId);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 
         return Ok(new { message = "Invite accepted" });
     }
 
-    [HttpPatch("invites/{inviteId}/decline")]
-    public async Task<IActionResult> DeclineInvite(Guid inviteId)
+    [HttpPatch("invites/{groupId}/decline")]
+    public async Task<IActionResult> DeclineInvite(Guid groupId)
     {
-        var result = await _groupInviteService.DeclineInviteAsync(inviteId);
+        var userId = GetCurrentUserId();
+        var result = await _groupInviteService.DeclineInviteAsync(userId, groupId);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 

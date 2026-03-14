@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.Interfaces.Service;
-using Vela.Infrastructure.Migrations;
 
 namespace Vela.API.Controllers;
 

@@ -14,17 +14,22 @@ public class AuthController(IAuthService authService, IShoppingListService shopp
     private readonly IShoppingListService _shoppingListService = shoppingListService;
     private readonly IMealPlanService _mealPlanService = mealPlanService;
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
-    {
-        var result = await _authService.RegisterAsync(registerRequestDto);
-        if (!result.Success)
-        {
-            return BadRequest(result.ErrorMessage);
-        }
+     [HttpPost("register")]
+     public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
+     {
+         var result = await _authService.RegisterAsync(registerRequestDto);
+         if (!result.Success)
+         {
+             return BadRequest(result.ErrorMessage);
+         }
 
-        var userId = GetCurrentUserId();
-        var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(userId, null, "Min indkøbsliste");
+         var userId = result.Data?.UserId;
+         if (string.IsNullOrEmpty(userId))
+         {
+             return BadRequest("Failed to retrieve user ID after registration");
+         }
+
+         var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(userId, null, "Min indkøbsliste");
 
         if (!shoppingListResult.Success)
         {

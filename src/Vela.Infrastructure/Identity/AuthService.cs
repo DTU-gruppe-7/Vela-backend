@@ -141,16 +141,17 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
         
         await _userManager.UpdateAsync(user);
         
-        return Result<AuthResponseDto>.Ok(new AuthResponseDto
-        {
-            Token = jwtToken,
-            RefreshToken = refreshToken,
-            Email = user.Email!,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            DateOfBirth = user.DateOfBirth
-        });
+         return Result<AuthResponseDto>.Ok(new AuthResponseDto
+         {
+             Token = jwtToken,
+             RefreshToken = refreshToken,
+             UserId = user.Id,
+             Email = user.Email!,
+             FirstName = user.FirstName,
+             LastName = user.LastName,
+             ProfilePictureUrl = user.ProfilePictureUrl,
+             DateOfBirth = user.DateOfBirth
+         });
     }
 
     private string GenerateJwtToken(AppUser user)
