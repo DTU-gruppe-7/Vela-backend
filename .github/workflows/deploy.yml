@@ -1,0 +1,52 @@
+name: Deploy Backend til Debian
+
+on:
+  push:
+    branches: [ "main" ] # Kører kun når du pusher til main
+
+env:
+  REGISTRY: ghcr.io
+  # RET DETTE TIL DIT BRUGERNAVN (med små bogstaver)
+  IMAGE_NAME: dtu-gruppe-7/vela-backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Giver GitHub lov til at gemme dit Docker image
+
+    steps:
+      - name: Hent koden
+        uses: actions/checkout@v4
+
+      - name: Log ind på GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Indbygget GitHub token
+
+      - name: Byg og push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Deploy til Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # Log ind på GHCR på serveren (så den må hente dit image)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Gå til projektmappen
+            cd ~/vela
+            
+            # Hent det nye image og genstart KUN backend containeren
+            docker compose pull backend
+            docker compose up -d backend
