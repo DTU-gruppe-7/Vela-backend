@@ -5,14 +5,12 @@ using Vela.Infrastructure.Identity;
 
 namespace Vela.Infrastructure.Data;
 
-public class AppDbContext : IdentityDbContext<AppUser>
+public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<AppUser>(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-    
     public DbSet<Recipe> Recipes => Set<Recipe>();
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
     public DbSet<RecipeIngredient> RecipeIngredients => Set<RecipeIngredient>();
-    public DbSet<SwipeRecipe> SwipeRecipes => Set<SwipeRecipe>();
+    public DbSet<Like> Likes => Set<Like>();
     public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
     public DbSet<ShoppingListItem> ShoppingListItems => Set<ShoppingListItem>();
     public DbSet<MealPlan> MealPlans => Set<MealPlan>();
@@ -38,10 +36,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .HasIndex(i => i.Name)
             .IsUnique();
         
-        modelBuilder.Entity<SwipeRecipe>()
-            .HasKey(s => s.SwipeId);
+        modelBuilder.Entity<Like>()
+            .HasKey(s => s.LikeId);
 
-        modelBuilder.Entity<SwipeRecipe>()
+        modelBuilder.Entity<Like>()
             .HasIndex(s => new { s.UserId,  s.RecipeId })
             .IsUnique();
         
@@ -138,8 +136,16 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         modelBuilder.Entity<GroupInvite>()
             .HasKey(gi => new { gi.GroupId, gi.UserId });
+        
+        //GroupRole enum
+        modelBuilder.Entity<GroupMember>()
+            .Property(gm => gm.Role)
+            .HasConversion<string>();
 
         // Match
+        modelBuilder.Entity<Match>()
+            .HasKey(m => new { m.GroupId, m.RecipeId });
+
         modelBuilder.Entity<Match>()
             .HasOne<Group>()
             .WithMany(g => g.Matches)
@@ -151,9 +157,5 @@ public class AppDbContext : IdentityDbContext<AppUser>
             .WithMany()
             .HasForeignKey(m => m.RecipeId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<Match>()
-            .HasIndex(m => new { m.GroupId, m.RecipeId })
-            .IsUnique();
     }
 }

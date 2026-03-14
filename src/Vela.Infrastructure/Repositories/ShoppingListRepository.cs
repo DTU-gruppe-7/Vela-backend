@@ -5,12 +5,8 @@ using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
 
-public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRepository
+public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingList>(context), IShoppingListRepository
 {
-    public ShoppingListRepository(AppDbContext context) : base(context)
-    {
-        
-    }
     
     /// <summary>
     /// Get shopping list with all items and ingredients

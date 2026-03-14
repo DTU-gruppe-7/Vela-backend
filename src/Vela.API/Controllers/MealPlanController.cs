@@ -38,9 +38,8 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         var updateResult = await _mealPlanService.UpdateMealPlanAsync(id, request.Name, request.Description);
         if (!updateResult.Success)
             return NotFound(new { message = updateResult.ErrorMessage });
-
-        var getResult = await _mealPlanService.GetMealPlanWithEntriesAsync(id);
-        return Ok(getResult.Data);
+        
+        return Ok(updateResult);
     }
 
     [HttpDelete("{id}")]

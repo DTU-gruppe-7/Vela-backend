@@ -9,7 +9,7 @@ public interface IGroupService
     Task<Result<GroupDto>> GetGroupAsync(Guid groupId);
     Task<Result<IEnumerable<GroupDto>>> GetGroupsByUserIdAsync(string userId);
     Task<Result> DeleteGroupAsync(Guid groupId);
-    Task<Result> AddMemberAsync(Guid groupId, AddMemberRequest request);
+    Task<Result> AddMemberAsync(Guid groupId, string userId);
     Task<Result> RemoveMemberAsync(Guid groupId, string userId);
     Task<Result<IEnumerable<MatchDto>>> GetMatchesAsync(Guid groupId);
 }

@@ -6,12 +6,9 @@ using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
 
-public class RecipeRepository : Repository<Recipe>, IRecipeRepository
+public class RecipeRepository(AppDbContext context) : Repository<Recipe>(context), IRecipeRepository
 {
-    public RecipeRepository(AppDbContext context) : base(context)
-    {
-    }
-
+    
     public async Task<IEnumerable<Recipe>> GetAllSummariesAsync()
     {
         return await _dbSet
@@ -47,7 +44,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
     {
         var query = _dbSet
-            .Where(r => !_context.Set<SwipeRecipe>().Any(sr => sr.RecipeId == r.Id && sr.UserId == userId));
+            .Where(r => !_context.Set<Like>().Any(sr => sr.RecipeId == r.Id && sr.UserId == userId));
         if (!string.IsNullOrEmpty(category))
         {
             query = query.Where(r => r.Category == category);
@@ -83,7 +80,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
         limit = Math.Clamp(limit, 1, 100);
 
-        return await _context.Set<SwipeRecipe>()
+        return await _context.Set<Like>()
             .Where(sr => sr.Direction == SwipeDirection.Like)
             .GroupBy(sr => sr.RecipeId)
             .Select(g => new
