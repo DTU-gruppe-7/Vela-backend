@@ -2,10 +2,10 @@
 
 namespace Vela.Domain.Entities;
 
-public class SwipeRecipe
+public class Like
 {
  
-    public Guid SwipeId { get; set; }
+    public Guid LikeId { get; set; }
     public required string UserId { get; set; }
     public Guid RecipeId { get; set; }
     public SwipeDirection Direction { get; set; } // Like/Dislike

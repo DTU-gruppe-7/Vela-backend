@@ -5,11 +5,8 @@ using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
 
-public class MealPlanRepository : Repository<MealPlan>, IMealPlanRepository
+public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(context), IMealPlanRepository
 {
-    public MealPlanRepository(AppDbContext context) : base(context)
-    {
-    }
 
     public async Task<MealPlan?> GetMealPlanWithEntriesAsync(Guid mealPlanId)
     {

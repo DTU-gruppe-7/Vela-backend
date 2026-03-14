@@ -6,16 +6,10 @@ using Vela.Domain.Entities;
 
 namespace Vela.Application.Services;
 
-public class SwipeService : ISwipeService
+public class SwipeService(IRecipeRepository recipeRepository, ILikeRepository likeRepository) : ISwipeService
 {
-    private readonly IRecipeRepository _recipeRepository;
-    private readonly ISwipeRepository _swipeRepository;
-
-    public SwipeService(IRecipeRepository recipeRepository, ISwipeRepository swipeRepository)
-    {
-        _recipeRepository = recipeRepository;
-        _swipeRepository = swipeRepository;
-    }
+    private readonly IRecipeRepository _recipeRepository = recipeRepository;
+    private readonly ILikeRepository _likeRepository  = likeRepository;
 
     public async Task<Result> RecordSwipeAsync(string userId, SwipeDto swipeDto)
     {
@@ -25,26 +19,27 @@ public class SwipeService : ISwipeService
             return Result.Fail("Recipe not found");
         }
 
-        var alreadySwiped = await _swipeRepository.HasUserSwipedOnRecipeAsync(userId, swipeDto.RecipeId);
+        var alreadySwiped = await _likeRepository.HasUserSwipedOnRecipeAsync(userId, swipeDto.RecipeId);
         if (alreadySwiped)
             return Result.Ok();
 
-        var swipe = new SwipeRecipe
+        var swipe = new Like
         {
-            SwipeId = Guid.NewGuid(),
+            LikeId = Guid.NewGuid(),
             UserId = userId,
             RecipeId = swipeDto.RecipeId,
             Direction = swipeDto.Direction,
             SwipedAt = DateTimeOffset.UtcNow,
         };
-        await _swipeRepository.RecordSwipeAsync(swipe);
+        await _likeRepository.AddAsync(swipe);
+        await _likeRepository.SaveChangesAsync();
 
         return Result.Ok();
     }
     
     public async Task<IEnumerable<RecipeSummaryDto>> GetLikedRecipesByUserIdAsync(string userId)
     {
-        var likedRecipes = await _swipeRepository.GetLikedRecipesByUserIdAsync(userId);
+        var likedRecipes = await _likeRepository.GetLikedRecipesByUserIdAsync(userId);
         return likedRecipes.Select(r => new RecipeSummaryDto
         {
             Id = r.Id,

@@ -78,16 +78,6 @@ public class GroupController(
         return Ok(new { message = "Group deleted successfully" });
     }
 
-    [HttpPost("{id}/members")]
-    public async Task<IActionResult> AddMember(Guid id, [FromBody] AddMemberRequest request)
-    {
-        var result = await _groupService.AddMemberAsync(id, request);
-        if (!result.Success)
-            return BadRequest(new { message = result.ErrorMessage });
-
-        return Ok(new { message = "Member added successfully" });
-    }
-
     [HttpDelete("{id}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(Guid id, string userId)
     {

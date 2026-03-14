@@ -61,7 +61,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IIngredientRepository, IngredientRepository>();
         services.AddScoped<IMealPlanRepository, MealPlanRepository>();
         services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
-        services.AddScoped<ISwipeRepository, SwipeRepository>();
+        services.AddScoped<ILikeRepository, LikeRepository>();
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
 

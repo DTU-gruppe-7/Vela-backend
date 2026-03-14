@@ -36,7 +36,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
                 return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found");
         }
 
-        return Result<MealPlanDto>.Ok(MapToDto(mealPlan, new List<MealPlanEntry>()));
+        return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
     
     public async Task<Result<MealPlanDto>> CreateMealPlanAsync(string? userId, Guid? groupId, string name)
@@ -60,7 +60,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
 
         await _mealPlanRepository.AddAsync(mealPlan);
         await _mealPlanRepository.SaveChangesAsync();
-        return Result<MealPlanDto>.Ok(MapToDto(mealPlan, new List<MealPlanEntry>()));
+        return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
 
     public async Task<Result> UpdateMealPlanAsync(Guid mealPlanId, string name, string? description)
@@ -150,10 +150,10 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         if (mealPlan == null)
             return Result<MealPlanDto>.Fail($"Meal plan with ID {mealPlanId} not found");
 
-        return Result<MealPlanDto>.Ok(MapToDto(mealPlan, mealPlan.Entries));
+        return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
 
-    private MealPlanDto MapToDto(MealPlan mealPlan, List<MealPlanEntry> entries)
+    private MealPlanDto MapToDto(MealPlan mealPlan)
     {
         return new MealPlanDto
         {
@@ -163,7 +163,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             Description = mealPlan.Description,
             CreatedAt = mealPlan.CreatedAt,
             UpdatedAt = mealPlan.UpdatedAt,
-            Entries = entries.Select(MapEntryToDto).ToList()
+            Entries = mealPlan.Entries.Select(MapEntryToDto).ToList()
         };
     }
 

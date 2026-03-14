@@ -8,10 +8,12 @@ namespace Vela.Application.Services;
 
 public class GroupInviteService(
     IGroupInviteRepository groupInviteRepository,
-    IGroupRepository groupRepository) : IGroupInviteService
+    IGroupRepository groupRepository,
+    IGroupService groupService) : IGroupInviteService
 {
     private readonly IGroupInviteRepository _groupInviteRepository = groupInviteRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
+    private readonly IGroupService _groupService = groupService;
 
     public async Task<Result> SendInviteAsync(string userId, Guid groupId)
     {
@@ -23,7 +25,6 @@ public class GroupInviteService(
         {
             GroupId = groupId,
             UserId = userId,
-            Status = "Pending",
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -42,15 +43,12 @@ public class GroupInviteService(
         if (invite == null)
             return Result.Fail($"Invite for user {userId} in group {groupId} not found");
         
-        var member = new GroupMember
-        {
-            GroupId = invite.GroupId,
-            UserId = invite.UserId,
-            Role = "Member",
-            JoinedAt = DateTimeOffset.UtcNow
-        };
+        var result = await _groupService.AddMemberAsync(groupId, userId); 
         
-        group.Members.Add(member);
+        if (!result.Success)
+            return Result.Fail("Failed to add member");
+        
+        await _groupInviteRepository.DeleteInviteAsync(invite);
 
         await _groupInviteRepository.SaveChangesAsync();
         return Result.Ok();
@@ -86,7 +84,6 @@ public class GroupInviteService(
         {
             GroupId = invite.GroupId,
             UserId = invite.UserId,
-            Status = invite.Status,
             CreatedAt = invite.CreatedAt,
             UpdatedAt = invite.UpdatedAt
         };

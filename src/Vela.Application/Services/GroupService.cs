@@ -3,17 +3,20 @@ using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Domain.Entities;
+using Vela.Domain.Enums;
 
 namespace Vela.Application.Services;
 
 public class GroupService(
     IGroupRepository groupRepository,
     IMealPlanRepository mealPlanRepository,
-    IShoppingListRepository shoppingListRepository) : IGroupService
+    IShoppingListRepository shoppingListRepository,
+    ILikeRepository likeRepository) : IGroupService
 {
     private readonly IGroupRepository _groupRepository = groupRepository;
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
+    private readonly ILikeRepository _likeRepository = likeRepository;
 
     public async Task<Result<GroupDto>> CreateGroupAsync(string userId, CreateGroupRequest request)
     {
@@ -24,19 +27,21 @@ public class GroupService(
             Status = "Active",
             CreatedAt = DateTimeOffset.UtcNow
         };
-        
+
         var owner = new GroupMember
         {
             GroupId = group.Id,
             UserId = userId,
-            Role = "Owner",
+            Role = GroupRole.Owner,
             JoinedAt = DateTimeOffset.UtcNow
         };
-        
-        group.Members.Add(owner);
 
+        group.Members.Add(owner);
+        
         await _groupRepository.AddAsync(group);
         await _groupRepository.SaveChangesAsync();
+
+        await RecalculateGroupMatchesAsync(group);
 
         return Result<GroupDto>.Ok(MapToDto(group));
     }
@@ -67,7 +72,7 @@ public class GroupService(
         return Result.Ok();
     }
 
-    public async Task<Result> AddMemberAsync(Guid groupId, AddMemberRequest request)
+    public async Task<Result> AddMemberAsync(Guid groupId, string userId)
     {
         var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
         if (group == null)
@@ -76,14 +81,17 @@ public class GroupService(
         var member = new GroupMember
         {
             GroupId = groupId,
-            UserId = request.UserId,
-            Role = request.Role,
+            UserId = userId,
+            Role = GroupRole.Member,
             JoinedAt = DateTimeOffset.UtcNow
         };
 
         group.Members.Add(member);
-        
+
         await _groupRepository.SaveChangesAsync();
+        
+        await RecalculateGroupMatchesAsync(group);
+        
         return Result.Ok();
     }
 
@@ -98,9 +106,11 @@ public class GroupService(
             {
                 group.Members.Remove(member);
                 await _groupRepository.SaveChangesAsync();
+                await RecalculateGroupMatchesAsync(group);
                 return Result.Ok();
-            } 
+            }
         }
+
         return Result.Fail($"No user with ID {userId} not found in group with ID {groupId}");
     }
 
@@ -110,7 +120,26 @@ public class GroupService(
         return Result<IEnumerable<MatchDto>>.Ok(matches.Select(MapMatchToDto));
     }
 
-    private GroupDto MapToDto(Group group)
+    private async Task RecalculateGroupMatchesAsync(Group group)
+    {
+        await _likeRepository.DeleteMatchesByGroupIdAsync(group.Id);
+        await _likeRepository.SaveChangesAsync();
+        var commonLikes = await _likeRepository.GetCommonLikedRecipeIdsAsync(group.Members.Select(m => m.UserId));
+
+        foreach (var recipeId in commonLikes)
+        {
+            var match = new Match
+            {
+                GroupId = group.Id,
+                RecipeId = recipeId,
+                MatchedAt = DateTimeOffset.UtcNow
+            };
+            await _likeRepository.RecordMatchAsync(match);
+        }
+        await _likeRepository.SaveChangesAsync();
+    }
+
+private GroupDto MapToDto(Group group)
     {
         return new GroupDto
         {
@@ -138,7 +167,6 @@ public class GroupService(
     {
         return new MatchDto
         {
-            Id = match.Id,
             GroupId = match.GroupId,
             RecipeId = match.RecipeId,
             MatchedAt = match.MatchedAt
