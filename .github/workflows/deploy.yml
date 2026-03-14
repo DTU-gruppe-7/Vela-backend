@@ -41,12 +41,11 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Log ind på GHCR på serveren (så den må hente dit image)
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Gå til projektmappen
-            cd ~/vela
+            # Gå til den korrekte mappe i roden af serveren
+            cd /opt/vela
             
-            # Hent det nye image og genstart KUN backend containeren
+            # Hent det nye image og genstart
             docker compose pull backend
             docker compose up -d backend
