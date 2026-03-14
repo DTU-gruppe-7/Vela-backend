@@ -19,13 +19,20 @@ public class MealPlanRepository : Repository<MealPlan>, IMealPlanRepository
             .FirstOrDefaultAsync(mp => mp.Id == mealPlanId);
     }
 
-    public async Task<IEnumerable<MealPlan>> GetByUserIdAsync(string userId)
+    public async Task<MealPlan?> GetByUserIdAsync(string userId)
     {
         return await _dbSet
-            .Where(mp => mp.UserId == userId)
             .Include(mp => mp.Entries)
             .ThenInclude(mpe => mpe.Recipe)
-            .ToListAsync();
+            .SingleOrDefaultAsync(mp => mp.UserId == userId);
+    }
+    
+    public async Task<MealPlan?> GetByGroupIdAsync(Guid groupId)
+    {
+        return await _dbSet
+            .Include(mp => mp.Entries)
+            .ThenInclude(mpe => mpe.Recipe)
+            .SingleOrDefaultAsync(mp => mp.GroupId == groupId);
     }
 
     public async Task AddEntryAsync(MealPlanEntry entry)

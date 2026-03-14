@@ -8,16 +8,25 @@ namespace Vela.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class GroupController(IGroupService groupService, IGroupInviteService groupInviteService) : BaseApiController
+public class GroupController(
+    IGroupService groupService, 
+    IGroupInviteService groupInviteService, 
+    IShoppingListService shoppingListService, 
+    IMealPlanService mealPlanService) : BaseApiController
 {
     private readonly IGroupService _groupService = groupService;
     private readonly IGroupInviteService _groupInviteService = groupInviteService;
+    private readonly IMealPlanService _mealPlanService = mealPlanService;
+    private readonly IShoppingListService _shoppingListService = shoppingListService;
+    
 
     [HttpGet]
-    public async Task<IActionResult> GetGroups()
+    public async Task<ActionResult<GroupDto>> GetGroups()
     {
         var userId = GetCurrentUserId();
         var result = await _groupService.GetGroupsByUserIdAsync(userId);
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
         return Ok(result.Data);
     }
 
@@ -32,11 +41,31 @@ public class GroupController(IGroupService groupService, IGroupInviteService gro
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request)
+    public async Task<ActionResult<GroupDto>> CreateGroup([FromBody] CreateGroupRequest request)
     {
         var userId = GetCurrentUserId();
         var result = await _groupService.CreateGroupAsync(userId, request);
-        return CreatedAtAction(nameof(GetGroup), new { id = result.Data!.Id }, result.Data);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+        
+        var groupId = result.Data.Id;
+        var groupName = result.Data.Name;
+        
+        var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(null, groupId, groupName + "'s indkøbsliste");
+        if (!shoppingListResult.Success){
+            await _groupService.DeleteGroupAsync(groupId);
+            return BadRequest(new { message = shoppingListResult.ErrorMessage });
+        }
+        
+        var mealPlanResult = await _mealPlanService.CreateMealPlanAsync(null, groupId, groupName + "'s madplan");
+        if (!mealPlanResult.Success)
+        {
+            await _groupService.DeleteGroupAsync(groupId);
+            return BadRequest(new { message = mealPlanResult.ErrorMessage });
+        }
+            
+        
+        return Ok(result.Data);
     }
 
     [HttpDelete("{id}")]
@@ -83,7 +112,7 @@ public class GroupController(IGroupService groupService, IGroupInviteService gro
     [HttpPost("{id}/invites")]
     public async Task<IActionResult> SendInvite(Guid id, [FromBody] SendInviteRequest request)
     {
-        var result = await _groupInviteService.SendInviteAsync(id, request.UserId);
+        var result = await _groupInviteService.SendInviteAsync(request.UserId, id);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 
@@ -97,20 +126,22 @@ public class GroupController(IGroupService groupService, IGroupInviteService gro
         return Ok(result.Data);
     }
 
-    [HttpPatch("invites/{inviteId}/accept")]
-    public async Task<IActionResult> AcceptInvite(Guid inviteId)
+    [HttpPatch("invites/{groupId}/accept")]
+    public async Task<IActionResult> AcceptInvite(Guid groupId)
     {
-        var result = await _groupInviteService.AcceptInviteAsync(inviteId);
+        var userId = GetCurrentUserId();
+        var result = await _groupInviteService.AcceptInviteAsync(userId, groupId);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 
         return Ok(new { message = "Invite accepted" });
     }
 
-    [HttpPatch("invites/{inviteId}/decline")]
-    public async Task<IActionResult> DeclineInvite(Guid inviteId)
+    [HttpPatch("invites/{groupId}/decline")]
+    public async Task<IActionResult> DeclineInvite(Guid groupId)
     {
-        var result = await _groupInviteService.DeclineInviteAsync(inviteId);
+        var userId = GetCurrentUserId();
+        var result = await _groupInviteService.DeclineInviteAsync(userId, groupId);
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
 

@@ -27,26 +27,24 @@ public class ShoppingListRepository : Repository<ShoppingList>, IShoppingListRep
     /// Get all shopping lists for a user with items
     /// Uses eager loading to avoid N+1 query problem
     /// </summary>
-    public async Task<IEnumerable<ShoppingList>> GetByUserIdAsync(string userId)
+    public async Task<ShoppingList?> GetByUserIdAsync(string userId)
     {
         return await _dbSet
             .Include(sl => sl.Items)! 
-            .Where(sl => sl.UserId == userId)
             .AsNoTracking()
-            .ToListAsync();
+            .SingleOrDefaultAsync(sl => sl.UserId == userId);
     }
 
     /// <summary>
     /// Get all shopping lists for a group with items
     /// Uses eager loading to avoid N+1 query problem
     /// </summary>
-    public async Task<IEnumerable<ShoppingList>> GetByGroupId(Guid groupId)
+    public async Task<ShoppingList?> GetByGroupIdAsync(Guid groupId)
     {
         return await _dbSet
             .Include(sl => sl.Items)! 
-            .Where(sl => sl.GroupId == groupId)
             .AsNoTracking()
-            .ToListAsync();
+            .SingleOrDefaultAsync(sl => sl.GroupId == groupId);
     }
     
     public async Task<ShoppingList?> GetByIdWithItemsReadOnlyAsync(Guid id)

@@ -41,8 +41,10 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
             return Result<AuthResponseDto>.Fail($"Could not create user: {errors}");
         }
         
+        
         return await GenerateUserTokenAsync(newUser);
     }
+
 
     public async Task<Result<AuthResponseDto>> LoginAsync(LoginRequestDto requestDto)
     {
@@ -76,6 +78,28 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
 
         // Generer nye tokens
         return await GenerateUserTokenAsync(user);
+    }
+
+    public async Task<Result> DeleteUserAsync(string userId)
+    {
+        try
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return Result.Fail("User not found");
+            
+            var result = await _userManager.DeleteAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return Result.Fail($"Could not delete user: {errors}");
+            }
+            return Result.Ok();
+        } catch (Exception ex)
+        {
+            return Result.Fail($"An error occured while deleting user: {ex.Message}");
+        }
     }
 
     public async Task<Result<bool>> LogoutAsync(string userId)
@@ -117,16 +141,17 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
         
         await _userManager.UpdateAsync(user);
         
-        return Result<AuthResponseDto>.Ok(new AuthResponseDto
-        {
-            Token = jwtToken,
-            RefreshToken = refreshToken,
-            Email = user.Email!,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            DateOfBirth = user.DateOfBirth
-        });
+         return Result<AuthResponseDto>.Ok(new AuthResponseDto
+         {
+             Token = jwtToken,
+             RefreshToken = refreshToken,
+             UserId = user.Id,
+             Email = user.Email!,
+             FirstName = user.FirstName,
+             LastName = user.LastName,
+             ProfilePictureUrl = user.ProfilePictureUrl,
+             DateOfBirth = user.DateOfBirth
+         });
     }
 
     private string GenerateJwtToken(AppUser user)

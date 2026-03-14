@@ -13,27 +13,61 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     private readonly IIngredientRepository _ingredientRepository = ingredientRepository;
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     
-    public async Task<IEnumerable<ShoppingListSummaryDto>> GetAllShoppingListsAsync()
+    public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId,  Guid? groupId)
     {
-        var shoppingLists = await _shoppingListRepository.GetAllAsync();
+        
+        var hasUserId = !string.IsNullOrWhiteSpace(userId);
+        var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
+        
+        if (hasUserId == hasGroupId)
+            return Result<ShoppingListDto>.Fail("Shopping list must belong to either a user or a group. Not both or none");
 
-        return shoppingLists.Select(r => new ShoppingListSummaryDto()
+        var shoppingList = new ShoppingList();
+
+        if (hasUserId)
         {
-            Id = r.Id,
-            UserId =  r.UserId,
-            GroupId =  r.GroupId,
-            Name = r.Name,
-            CreatedAt =  r.CreatedAt,
-            UpdatedAt =  r.UpdatedAt,
-        }).ToList();
+            shoppingList = await _shoppingListRepository.GetByUserIdAsync(userId);
+            if (shoppingList == null)
+                return Result<ShoppingListDto>.Fail("Shopping list not found");
+        }
+        else
+        {
+            Guid foundGroupId = groupId ?? Guid.Empty;
+            shoppingList = await _shoppingListRepository.GetByGroupIdAsync(foundGroupId);
+            if (shoppingList == null)
+                return Result<ShoppingListDto>.Fail("Shopping list not found");
+        }
+
+        return Result<ShoppingListDto>.Ok(new ShoppingListDto
+        {
+            Id = shoppingList.Id,
+            UserId =  shoppingList.UserId,
+            GroupId =  shoppingList.GroupId,
+            Name = shoppingList.Name,
+            CreatedAt =  shoppingList.CreatedAt,
+            UpdatedAt =  shoppingList.UpdatedAt,
+            Items = shoppingList.Items?.Select(i => new ShoppingListItemDto
+            {
+                Id = i.Id,
+                IngredientName = i.IngredientName,
+                AssignedUserId = i.AssignedUserId,
+                Quantity = i.Quantity,
+                Unit = i.Unit,
+                Price = i.Price,
+                Shop = i.Shop,
+                IsBought = i.IsBought,
+                CreatedAt = i.CreatedAt,
+                UpdatedAt = i.UpdatedAt
+            }).ToList() ?? new()
+        });
     }
 
-    public async Task<Result<ShoppingListDto?>> GetShoppingListById(Guid id)
+    public async Task<Result<ShoppingListDto>> GetShoppingListById(Guid id)
     {
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
         
         if (shoppingList == null)
-            return Result<ShoppingListDto?>.Fail("ShoppingList not found");
+            return Result<ShoppingListDto>.Fail("ShoppingList not found");
 
         var dto = new ShoppingListDto
         {
@@ -61,21 +95,28 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result<ShoppingListDto?>.Ok(dto);
     }
 
-    public async Task<ShoppingListDto> CreateShoppingListAsync(string userId, CreateShoppingListDto dto)
+    public async Task<Result<ShoppingListDto>> CreateShoppingListAsync(string? userId, Guid? groupId, string name)
     {
+        var hasUserId = !string.IsNullOrWhiteSpace(userId);
+        var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
+        
+        if (hasUserId == hasGroupId)
+            return Result<ShoppingListDto>.Fail("Shopping list must belong to either a user or a group. Not both or none");
+
+
         var shoppingList = new ShoppingList
         {
             Id = Guid.NewGuid(),
             UserId = userId,
-            GroupId = dto.GroupId,
-            Name = dto.Name,
+            GroupId = groupId,
+            Name = name,
             CreatedAt = DateTimeOffset.UtcNow,
         };
 
         await _shoppingListRepository.AddAsync(shoppingList);
         await _shoppingListRepository.SaveChangesAsync();
 
-        return new ShoppingListDto
+        return Result<ShoppingListDto>.Ok(new ShoppingListDto
         {
             Id = shoppingList.Id,
             UserId = shoppingList.UserId,
@@ -84,7 +125,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             CreatedAt = shoppingList.CreatedAt,
             UpdatedAt = shoppingList.UpdatedAt,
             Items = new()
-        };
+        });
     }
 
     public async Task<Result<ShoppingListItemDto>> UpdateShoppingListItem(Guid itemId, ShoppingListItemDto dto )
@@ -184,7 +225,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     {
         var item = await _shoppingListRepository.DeleteItemAsync(itemId);
         if (item == null)
-            return Result<ShoppingListItemDto>.Fail("Item not found");
+            return Result.Fail("Item not found");
         await _shoppingListRepository.SaveChangesAsync();
 
         return Result.Ok();
@@ -281,7 +322,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
 
     private (ShoppingListItem, bool isNew) AccumulateOrCreateItem(ShoppingList shoppingList, string ingredientName, string? unit, double qtyToAdd)
     {
-        var existingItem = shoppingList.Items.FirstOrDefault(i =>                                                                                                                                                                       
+        var existingItem = shoppingList.Items?.FirstOrDefault(i =>                                                                                                                                                                       
             i.IngredientName.Trim().Equals(ingredientName, StringComparison.OrdinalIgnoreCase) &&                                                                                                                                       
             i.Unit == unit); 
 

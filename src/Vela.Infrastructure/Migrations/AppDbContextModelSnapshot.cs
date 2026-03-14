@@ -180,15 +180,14 @@ namespace Vela.Infrastructure.Migrations
 
             modelBuilder.Entity("Vela.Domain.Entities.GroupInvite", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("GroupId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("GroupId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .HasColumnType("text");
@@ -196,25 +195,18 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId", "UserId");
+                    b.HasKey("GroupId", "UserId");
 
                     b.ToTable("GroupInvites");
                 });
 
             modelBuilder.Entity("Vela.Domain.Entities.GroupMember", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("GroupId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("JoinedAt")
                         .HasColumnType("timestamp with time zone");
@@ -222,14 +214,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<string>("Role")
                         .HasColumnType("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId", "UserId")
-                        .IsUnique();
+                    b.HasKey("GroupId", "UserId");
 
                     b.ToTable("GroupMembers");
                 });
@@ -295,6 +280,9 @@ namespace Vela.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -305,17 +293,19 @@ namespace Vela.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("GroupId");
 
                     b.HasIndex("UserId");
 
@@ -457,6 +447,10 @@ namespace Vela.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GroupId");
+
+                    b.HasIndex("UserId");
+
                     b.ToTable("ShoppingLists");
                 });
 
@@ -496,10 +490,6 @@ namespace Vela.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -721,9 +711,17 @@ namespace Vela.Infrastructure.Migrations
                 {
                     b.HasOne("Vela.Infrastructure.Identity.AppUser", null)
                         .WithMany("MealPlans")
+                        .HasForeignKey("AppUserId");
+
+                    b.HasOne("Vela.Domain.Entities.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Vela.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Vela.Domain.Entities.MealPlanEntry", b =>
@@ -762,6 +760,19 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Ingredient");
 
                     b.Navigation("Recipe");
+                });
+
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+                {
+                    b.HasOne("Vela.Domain.Entities.Group", null)
+                        .WithMany()
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Vela.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Vela.Domain.Entities.ShoppingListItem", b =>

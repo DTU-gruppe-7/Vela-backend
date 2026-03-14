@@ -8,18 +8,42 @@ namespace Vela.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthService authService) : BaseApiController
+public class AuthController(IAuthService authService, IShoppingListService shoppingListService, IMealPlanService mealPlanService) : BaseApiController
 {
     private readonly IAuthService _authService =  authService;
+    private readonly IShoppingListService _shoppingListService = shoppingListService;
+    private readonly IMealPlanService _mealPlanService = mealPlanService;
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
-    {
-        var result = await _authService.RegisterAsync(registerRequestDto);
-        if (!result.Success)
+     [HttpPost("register")]
+     public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
+     {
+         var result = await _authService.RegisterAsync(registerRequestDto);
+         if (!result.Success)
+         {
+             return BadRequest(result.ErrorMessage);
+         }
+
+         var userId = result.Data?.UserId;
+         if (string.IsNullOrEmpty(userId))
+         {
+             return BadRequest("Failed to retrieve user ID after registration");
+         }
+
+         var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(userId, null, "Min indkøbsliste");
+
+        if (!shoppingListResult.Success)
         {
-            return BadRequest(result.ErrorMessage);
+            await _authService.DeleteUserAsync(userId);
+            return BadRequest(shoppingListResult.ErrorMessage);
         }
+        
+        var mealPlanResult = await _mealPlanService.CreateMealPlanAsync(userId, null, "Min madplan");
+        if (!mealPlanResult.Success)
+        {
+            await _authService.DeleteUserAsync(userId);
+            return BadRequest(mealPlanResult.ErrorMessage);
+        }
+        
         return Ok(result.Data);
     }
 

@@ -13,7 +13,7 @@ public class GroupInviteService(
     private readonly IGroupInviteRepository _groupInviteRepository = groupInviteRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
 
-    public async Task<Result> SendInviteAsync(Guid groupId, string userId)
+    public async Task<Result> SendInviteAsync(string userId, Guid groupId)
     {
         var group = await _groupRepository.GetByUuidAsync(groupId);
         if (group == null)
@@ -21,7 +21,6 @@ public class GroupInviteService(
 
         var invite = new GroupInvite
         {
-            Id = Guid.NewGuid(),
             GroupId = groupId,
             UserId = userId,
             Status = "Pending",
@@ -33,34 +32,38 @@ public class GroupInviteService(
         return Result.Ok();
     }
 
-    public async Task<Result> AcceptInviteAsync(Guid inviteId)
+    public async Task<Result> AcceptInviteAsync(string userId, Guid groupId)
     {
-        var invite = await _groupInviteRepository.GetByUuidAsync(inviteId);
+        var group = await _groupRepository.GetByUuidAsync(groupId);
+        if (group == null)
+            return Result.Fail($"Group with ID {groupId} not found");
+        
+        var invite = await _groupInviteRepository.GetGroupInviteAsync(userId, groupId);
         if (invite == null)
-            return Result.Fail($"Invite with ID {inviteId} not found");
-
+            return Result.Fail($"Invite for user {userId} in group {groupId} not found");
+        
         var member = new GroupMember
         {
-            Id = Guid.NewGuid(),
             GroupId = invite.GroupId,
             UserId = invite.UserId,
             Role = "Member",
             JoinedAt = DateTimeOffset.UtcNow
         };
+        
+        group.Members.Add(member);
 
-        await _groupInviteRepository.UpdateStatusAsync(inviteId, "Accepted");
-        await _groupRepository.AddMemberAsync(member);
         await _groupInviteRepository.SaveChangesAsync();
         return Result.Ok();
     }
 
-    public async Task<Result> DeclineInviteAsync(Guid inviteId)
+    public async Task<Result> DeclineInviteAsync(string userId, Guid groupId)
     {
-        var invite = await _groupInviteRepository.GetByUuidAsync(inviteId);
+        var invite = await _groupInviteRepository.GetGroupInviteAsync(userId, groupId);
         if (invite == null)
-            return Result.Fail($"Invite with ID {inviteId} not found");
-
-        await _groupInviteRepository.UpdateStatusAsync(inviteId, "Declined");
+            return Result.Fail($"Invite for user {userId} in group {groupId} not found");
+        
+        await _groupInviteRepository.DeleteInviteAsync(invite);
+        
         await _groupInviteRepository.SaveChangesAsync();
         return Result.Ok();
     }
@@ -81,7 +84,6 @@ public class GroupInviteService(
     {
         return new GroupInviteDto
         {
-            Id = invite.Id,
             GroupId = invite.GroupId,
             UserId = invite.UserId,
             Status = invite.Status,

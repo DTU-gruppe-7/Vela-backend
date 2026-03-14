@@ -24,39 +24,18 @@ public class GroupService(
             Status = "Active",
             CreatedAt = DateTimeOffset.UtcNow
         };
-
-        var mealPlan = new MealPlan
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            GroupId = group.Id,
-            Name = $"{request.Name}'s madplan",
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
-
-        var shoppingList = new ShoppingList
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            GroupId = group.Id,
-            Name = $"{request.Name}'s indkøbsliste",
-            CreatedAt = DateTimeOffset.UtcNow
-        };
-
+        
         var owner = new GroupMember
         {
-            Id = Guid.NewGuid(),
             GroupId = group.Id,
             UserId = userId,
             Role = "Owner",
             JoinedAt = DateTimeOffset.UtcNow
         };
+        
+        group.Members.Add(owner);
 
         await _groupRepository.AddAsync(group);
-        await _groupRepository.AddMemberAsync(owner);
-        await _mealPlanRepository.AddAsync(mealPlan);
-        await _shoppingListRepository.AddAsync(shoppingList);
         await _groupRepository.SaveChangesAsync();
 
         return Result<GroupDto>.Ok(MapToDto(group));
@@ -90,37 +69,39 @@ public class GroupService(
 
     public async Task<Result> AddMemberAsync(Guid groupId, AddMemberRequest request)
     {
-        var group = await _groupRepository.GetByUuidAsync(groupId);
+        var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
         if (group == null)
             return Result.Fail($"Group with ID {groupId} not found");
 
-        var existing = await _groupRepository.GetMemberAsync(groupId, request.UserId);
-        if (existing != null)
-            return Result.Fail("User is already a member of this group");
-
         var member = new GroupMember
         {
-            Id = Guid.NewGuid(),
             GroupId = groupId,
             UserId = request.UserId,
             Role = request.Role,
             JoinedAt = DateTimeOffset.UtcNow
         };
 
-        await _groupRepository.AddMemberAsync(member);
+        group.Members.Add(member);
+        
         await _groupRepository.SaveChangesAsync();
         return Result.Ok();
     }
 
     public async Task<Result> RemoveMemberAsync(Guid groupId, string userId)
     {
-        var member = await _groupRepository.GetMemberAsync(groupId, userId);
-        if (member == null)
-            return Result.Fail("Member not found in this group");
-
-        await _groupRepository.RemoveMemberAsync(groupId, userId);
-        await _groupRepository.SaveChangesAsync();
-        return Result.Ok();
+        var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
+        if (group == null)
+            return Result.Fail($"Group with ID {groupId} not found");
+        foreach (var member in group.Members)
+        {
+            if (member.UserId == userId)
+            {
+                group.Members.Remove(member);
+                await _groupRepository.SaveChangesAsync();
+                return Result.Ok();
+            } 
+        }
+        return Result.Fail($"No user with ID {userId} not found in group with ID {groupId}");
     }
 
     public async Task<Result<IEnumerable<MatchDto>>> GetMatchesAsync(Guid groupId)
@@ -146,7 +127,6 @@ public class GroupService(
     {
         return new GroupMemberDto
         {
-            Id = member.Id,
             GroupId = member.GroupId,
             UserId = member.UserId,
             Role = member.Role,
