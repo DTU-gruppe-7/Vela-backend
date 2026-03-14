@@ -103,7 +103,7 @@ If you are using **JetBrains Rider**, follow these visual steps to connect to yo
 To populate your database with initial recipe data:
 
 1. **Start the server** (if not already running).
-2. Open **Swagger UI**: [http://localhost:5203/swagger/index.html](https://www.google.com/search?q=http://localhost:5203/swagger/index.html)
+2. Open **Swagger UI**: [http://localhost:5203/scalar](http://localhost:5203/scalar)
 3. Locate and execute the **Admin POST** request.
 4. **Verify:** Check your Database Explorer to ensure the recipes have been successfully imported.
 
@@ -147,13 +147,13 @@ dotnet ef database drop --force --project src/Vela.Infrastructure --startup-proj
 docker compose down -v
 ```
 
-# 3. Starts the instans again
+# 3. Delete folders:
+1. Delete the .\postgres-data folder and the .\src\Vela.Infrastructure\Migrations folder
+
+# 4. Starts the instans again
 ```bash
 docker compose up -d
 ```
-
-# 4. Delete folders:
-1. Delete the .\postgres-data folder and the .\src\Vela.Infrastructure\Migrations folder
 
 # 5. Make the migration
 ```bash
