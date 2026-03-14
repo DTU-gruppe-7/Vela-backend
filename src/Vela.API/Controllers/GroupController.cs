@@ -131,7 +131,7 @@ public class GroupController(
         return Ok(result.Data);
     }
 
-    [HttpPatch("invites/{groupId}/accept")]
+    [HttpPatch("{groupId}/invites/accept")]
     public async Task<IActionResult> AcceptInvite(Guid groupId)
     {
         var userId = GetCurrentUserId();
@@ -142,7 +142,7 @@ public class GroupController(
         return Ok(new { message = "Invite accepted" });
     }
 
-    [HttpPatch("invites/{groupId}/decline")]
+    [HttpPatch("{groupId}/invites/decline")]
     public async Task<IActionResult> DeclineInvite(Guid groupId)
     {
         var userId = GetCurrentUserId();

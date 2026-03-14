@@ -73,7 +73,10 @@ public class RecipeService(IRecipeRepository recipeRepository) : IRecipeService
 
     public async Task<IEnumerable<RecipeSummaryDto>> GetMostLikedRecipesAsync(int limit = 20)
     {
+        Console.WriteLine("I'm here!");
         var recipes = await _recipeRepository.GetMostLikedRecipesAsync(limit);
+        foreach (var recipe in recipes)
+            Console.WriteLine($"{recipe.Id} - {recipe.Name}");
         return recipes.Select(r => FromEntity(r)).ToList();
     }
 }
