@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Vela.Domain.Entities;
+using Vela.Domain.Entities.Notification;
 using Vela.Infrastructure.Identity;
 
 namespace Vela.Infrastructure.Data;
@@ -19,6 +20,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<GroupMember> GroupMembers => Set<GroupMember>();
     public DbSet<GroupInvite> GroupInvites => Set<GroupInvite>();
     public DbSet<Match> Matches => Set<Match>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +29,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         // RecipeIngredient bruger sit eget Id som PK
         modelBuilder.Entity<RecipeIngredient>()
             .HasKey(ri => ri.Id);
+
+        modelBuilder.Entity<RecipeIngredient>()
+            .HasOne(ri => ri.Recipe)
+            .WithMany(r => r.Ingredients)
+            .HasForeignKey(ri => ri.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RecipeIngredient>()
+            .HasOne(ri => ri.Ingredient)
+            .WithMany()
+            .HasForeignKey(ri => ri.IngredientId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Index for hurtig opslag på Recipe + Ingredient
         modelBuilder.Entity<RecipeIngredient>()
@@ -42,6 +56,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         modelBuilder.Entity<Like>()
             .HasIndex(s => new { s.UserId,  s.RecipeId })
             .IsUnique();
+
+        modelBuilder.Entity<Like>()
+            .HasOne(l => l.Recipe)
+            .WithMany()
+            .HasForeignKey(l => l.RecipeId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         // ShoppingList -> AppUser (optional relationship)
         modelBuilder.Entity<ShoppingList>()
@@ -127,6 +147,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         modelBuilder.Entity<GroupMember>()
             .HasKey(gm => new { gm.GroupId, gm.UserId });
 
+        modelBuilder.Entity<GroupMember>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(gm => gm.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // GroupInvite
         modelBuilder.Entity<GroupInvite>()
             .HasOne<Group>()
@@ -157,5 +183,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             .WithMany()
             .HasForeignKey(m => m.RecipeId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Notification
+        modelBuilder.Entity<Notification>()
+            .HasKey(n => n.Id);
+
+        modelBuilder.Entity<Notification>()
+            .HasOne<AppUser>()
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => n.UserId);
     }
 }

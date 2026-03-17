@@ -34,6 +34,25 @@ public class LikeRepository(AppDbContext context) : Repository<Like>(context), I
             .ToListAsync();
     }
 
+    public async Task<bool> CheckForNewMatch(IEnumerable<string> userIds, Guid recipeId)
+    {
+        var userIdList = userIds.ToList();
+        var expectedUserCount = userIdList.Count;
+
+        // Guard clause: Hvis der ikke er sendt nogen brugere med, kan der ikke være et match
+        if (expectedUserCount == 0) return false;
+
+        var actualUserCount = await _context.Set<Like>()
+            .Where(sr => sr.RecipeId == recipeId 
+                         && userIdList.Contains(sr.UserId) 
+                         && sr.Direction == SwipeDirection.Like)
+            .Select(sr => sr.UserId)
+            .Distinct()
+            .CountAsync();
+
+        return actualUserCount == expectedUserCount;
+    } 
+
     public async Task RecordMatchAsync(Match match)
     {
         await _context.Set<Match>().AddAsync(match);

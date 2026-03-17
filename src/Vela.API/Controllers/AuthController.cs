@@ -6,8 +6,6 @@ using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 public class AuthController(IAuthService authService, IShoppingListService shoppingListService, IMealPlanService mealPlanService) : BaseApiController
 {
     private readonly IAuthService _authService =  authService;

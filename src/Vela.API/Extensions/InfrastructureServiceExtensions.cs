@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Vela.API.Notification;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.External;
 using Vela.Application.Interfaces.Service;
+using Vela.Application.Interfaces.Service.Notification;
 using Vela.Application.Services;
+using Vela.Application.Services.Notification;
 using Vela.Infrastructure.Data;
 using Vela.Infrastructure.Repositories;
 using Vela.Infrastructure.External.RecipeImport;
@@ -54,7 +57,25 @@ public static class InfrastructureServiceExtensions
                     ValidIssuer = configuration["JwtSettings:Issuer"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]!))
                 };
+                // SignalR sender ikke Authorization header over WebSocket — læs token fra query string
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
+        
+        //Notifications
+        services.AddScoped<IRealtimeNotificationService, SignalRNotificationService>();
+        services.AddScoped<INotificationDispatcher, NotificationDispatcher>();
         
         //Repositories
         services.AddScoped<IRecipeRepository, RecipeRepository>();
@@ -64,16 +85,18 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ILikeRepository, LikeRepository>();
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
 
         //Services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IRecipeService, RecipeService>();
-        services.AddScoped<ISwipeService, SwipeService>();
+        services.AddScoped<ILikeService, LikeService>();
         services.AddScoped<IShoppingListService, ShoppingListService>();
         services.AddScoped<IMealPlanService, MealPlanService>();
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IGroupInviteService, GroupInviteService>();
-        
+        services.AddScoped<INotificationService, NotificationService>();
+
         // Import Service
         services.AddScoped<IRecipeImportService, JsonRecipeImportService>();
         

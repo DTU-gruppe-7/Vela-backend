@@ -215,7 +215,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         if (shoppingList == null)
             return Result.Fail("Shopping list not found");
 
-        await _shoppingListRepository.DeleteAsync(id);
+        await _shoppingListRepository.DeleteAsync(shoppingList);
         await _shoppingListRepository.SaveChangesAsync();
     
         return Result.Ok();

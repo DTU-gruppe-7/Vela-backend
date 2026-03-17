@@ -6,17 +6,15 @@ using Vela.Application.Interfaces.Service;
 namespace Vela.API.Controllers
 {
     [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class SwipeController(ISwipeService swipeService) : BaseApiController
+    public class SwipeController(ILikeService likeService) : BaseApiController
     {
-        private readonly ISwipeService _swipeService = swipeService;
+        private readonly ILikeService _likeService = likeService;
 
         [HttpPost]
         public async Task<IActionResult> RecordSwipe([FromBody] SwipeDto swipeDto)
         {
             var userId = GetCurrentUserId();
-            var result = await _swipeService.RecordSwipeAsync(userId, swipeDto);
+            var result = await _likeService.RecordSwipeAsync(userId, swipeDto);
 
             if (!result.Success)
             {
@@ -31,7 +29,7 @@ namespace Vela.API.Controllers
         public async Task<IActionResult> GetLikedRecipesByUserIdAsync()
         {
             var userId = GetCurrentUserId();
-            var likedRecipes = await _swipeService.GetLikedRecipesByUserIdAsync(userId);
+            var likedRecipes = await _likeService.GetLikedRecipesByUserIdAsync(userId);
             return Ok(likedRecipes);
         }
     }

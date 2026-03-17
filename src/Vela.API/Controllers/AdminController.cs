@@ -5,8 +5,6 @@ using Vela.Application.Interfaces.External;
 namespace Vela.API.Controllers;
 
 [Authorize]
-[ApiController]
-[Route("api/[controller]")]
 public class AdminController(IRecipeImportService importService) : BaseApiController
 {
     private readonly IRecipeImportService _importService = importService;

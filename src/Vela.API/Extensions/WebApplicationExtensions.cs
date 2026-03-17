@@ -1,5 +1,6 @@
 ﻿using AspNetCoreRateLimit;
 using Scalar.AspNetCore;
+using Vela.API.Hubs;
 
 namespace Vela.API.Extensions;
 
@@ -20,6 +21,7 @@ public static class WebApplicationExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         
+        app.MapHub<NotificationHub>("/hubs/notifications");
         app.MapControllers();
         
         return app;

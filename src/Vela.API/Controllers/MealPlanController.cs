@@ -6,8 +6,6 @@ using Vela.Application.Interfaces.Service;
 namespace Vela.API.Controllers;
 
 [Authorize]
-[ApiController]
-[Route("api/[controller]")]
 public class MealPlanController(IMealPlanService mealPlanService) : BaseApiController
 {
     private readonly IMealPlanService _mealPlanService = mealPlanService;
