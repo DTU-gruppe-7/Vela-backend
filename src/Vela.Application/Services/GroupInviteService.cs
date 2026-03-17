@@ -2,18 +2,22 @@ using Vela.Application.Common;
 using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
+using Vela.Application.Interfaces.Service.Notification;
 using Vela.Domain.Entities;
+using Vela.Domain.Enums;
 
 namespace Vela.Application.Services;
 
 public class GroupInviteService(
     IGroupInviteRepository groupInviteRepository,
     IGroupRepository groupRepository,
-    IGroupService groupService) : IGroupInviteService
+    IGroupService groupService,
+    INotificationDispatcher notificationDispatcher) : IGroupInviteService
 {
     private readonly IGroupInviteRepository _groupInviteRepository = groupInviteRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
     private readonly IGroupService _groupService = groupService;
+    private readonly INotificationDispatcher _notificationDispatcher = notificationDispatcher;
 
     public async Task<Result> SendInviteAsync(string userId, Guid groupId)
     {
@@ -30,6 +34,14 @@ public class GroupInviteService(
 
         await _groupInviteRepository.AddAsync(invite);
         await _groupInviteRepository.SaveChangesAsync();
+        
+        await _notificationDispatcher.DispatchAsync(
+            userId,
+            "Ny gruppeinvitation",
+            $"Du er inviteret til gruppen {group.Name}",
+            NotificationType.GroupInvite,
+            groupId);
+        
         return Result.Ok();
     }
 

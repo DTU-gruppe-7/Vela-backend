@@ -491,3 +491,6 @@ appsettings.Development.json
 secrets.json
 
 **/bin\\Debug/
+
+AGENTS.md
+CLAUDE.md

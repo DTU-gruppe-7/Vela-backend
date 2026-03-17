@@ -83,7 +83,7 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
         if (mealPlan == null)
             return Result.Fail($"Meal plan with ID {mealPlanId} not found");
 
-        await _mealPlanRepository.DeleteAsync(mealPlanId);
+        await _mealPlanRepository.DeleteAsync(mealPlan);
         await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }

@@ -8,8 +8,6 @@ using Vela.Infrastructure.Identity;
 namespace Vela.API.Controllers;
 
 [Authorize]
-[ApiController]
-[Route("api/[controller]")]
 public class GroupController(
     IGroupService groupService, 
     IGroupInviteService groupInviteService, 

@@ -12,7 +12,7 @@ public class GroupInviteRepository(AppDbContext context) : Repository<GroupInvit
         throw new NotSupportedException("GroupInvite uses composite key (UserId, GroupId). User GetGroupInviteAsync instead.");
     }
 
-    public override Task DeleteAsync(Guid uuid)
+    public override Task DeleteAsync(GroupInvite entity)
     {
         throw new NotSupportedException("GroupInvite uses composite key (UserId, GroupId). User DeleteInviteAsync instead.");
     }

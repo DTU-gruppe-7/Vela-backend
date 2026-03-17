@@ -11,12 +11,14 @@ public class GroupService(
     IGroupRepository groupRepository,
     IMealPlanRepository mealPlanRepository,
     IShoppingListRepository shoppingListRepository,
-    ILikeRepository likeRepository) : IGroupService
+    ILikeRepository likeRepository,
+    ILikeService likeService) : IGroupService
 {
     private readonly IGroupRepository _groupRepository = groupRepository;
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly ILikeRepository _likeRepository = likeRepository;
+    private readonly ILikeService _likeService = likeService;
 
     public async Task<Result<GroupDto>> CreateGroupAsync(string userId, CreateGroupRequest request)
     {
@@ -41,7 +43,7 @@ public class GroupService(
         await _groupRepository.AddAsync(group);
         await _groupRepository.SaveChangesAsync();
 
-        await RecalculateGroupMatchesAsync(group);
+        await _likeService.RecalculateGroupMatchesAsync(group);
 
         return Result<GroupDto>.Ok(MapToDto(group));
     }
@@ -67,7 +69,7 @@ public class GroupService(
         if (group == null)
             return Result.Fail($"Group with ID {groupId} not found");
 
-        await _groupRepository.DeleteAsync(groupId);
+        await _groupRepository.DeleteAsync(group);
         await _groupRepository.SaveChangesAsync();
         return Result.Ok();
     }
@@ -90,7 +92,7 @@ public class GroupService(
 
         await _groupRepository.SaveChangesAsync();
         
-        await RecalculateGroupMatchesAsync(group);
+        await _likeService.RecalculateGroupMatchesAsync(group);
         
         return Result.Ok();
     }
@@ -106,7 +108,7 @@ public class GroupService(
             {
                 group.Members.Remove(member);
                 await _groupRepository.SaveChangesAsync();
-                await RecalculateGroupMatchesAsync(group);
+                await _likeService.RecalculateGroupMatchesAsync(group);
                 return Result.Ok();
             }
         }
@@ -118,25 +120,6 @@ public class GroupService(
     {
         var matches = await _groupRepository.GetMatchesByGroupIdAsync(groupId);
         return Result<IEnumerable<MatchDto>>.Ok(matches.Select(MapMatchToDto));
-    }
-
-    private async Task RecalculateGroupMatchesAsync(Group group)
-    {
-        await _likeRepository.DeleteMatchesByGroupIdAsync(group.Id);
-        await _likeRepository.SaveChangesAsync();
-        var commonLikes = await _likeRepository.GetCommonLikedRecipeIdsAsync(group.Members.Select(m => m.UserId));
-
-        foreach (var recipeId in commonLikes)
-        {
-            var match = new Match
-            {
-                GroupId = group.Id,
-                RecipeId = recipeId,
-                MatchedAt = DateTimeOffset.UtcNow
-            };
-            await _likeRepository.RecordMatchAsync(match);
-        }
-        await _likeRepository.SaveChangesAsync();
     }
 
 private GroupDto MapToDto(Group group)

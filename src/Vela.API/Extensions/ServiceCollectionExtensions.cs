@@ -1,6 +1,8 @@
 ﻿using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
 using Microsoft.OpenApi;
+using Vela.API.Notification;
+using Vela.Application.Interfaces.Service.Notification;
 
 namespace Vela.API.Extensions;
 
@@ -95,6 +97,9 @@ public static class ServiceCollectionExtensions
 
         // 4. Registrer standard konfigurationen for rate limiting
         services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+        
+        //Notifications
+        services.AddSignalR();
         
         return services;
     }
