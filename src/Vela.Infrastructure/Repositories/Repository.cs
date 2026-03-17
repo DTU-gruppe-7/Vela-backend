@@ -29,9 +29,8 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : clas
         _context.Entry(entity).State = EntityState.Modified;
     }
 
-    public virtual async Task DeleteAsync(Guid uuid)
+    public virtual async Task DeleteAsync(T entity)
     {
-        var entity = await GetByUuidAsync(uuid);
         if (entity == null) return;
         _dbSet.Remove(entity);
     }

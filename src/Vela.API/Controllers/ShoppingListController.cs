@@ -7,8 +7,6 @@ using Vela.Application.Interfaces.Service;
 namespace Vela.API.Controllers;
 
 [Authorize]
-[ApiController]
-[Route("api/[controller]")]
 public class ShoppingListController(IShoppingListService shoppingListService) : BaseApiController
 {
     private readonly IShoppingListService _shoppingListService = shoppingListService;

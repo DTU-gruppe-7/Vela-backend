@@ -6,8 +6,6 @@ using Vela.Application.Interfaces.Service;
 namespace Vela.API.Controllers
 {
 	[Authorize]
-	[ApiController]
-	[Route("api/[controller]")]
 	public class RecipeController(IRecipeService recipeService) : BaseApiController
 	{
 		private readonly IRecipeService _recipeService = recipeService;
