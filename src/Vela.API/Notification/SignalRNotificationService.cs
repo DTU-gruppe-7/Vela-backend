@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Vela.API.Hubs;
+using Vela.Application.DTOs.Notification;
 using Vela.Application.Interfaces.Service.Notification;
 using Vela.Domain.Enums;
 
@@ -12,7 +13,7 @@ public class SignalRNotificationService(IHubContext<NotificationHub> hubContext)
     public async Task SendNotificationAsync(string userId, string title, string message, NotificationType type, object? payload = null)
     {
         await _hubContext.Clients.Group(userId)
-            .SendAsync("ReceiveNotification", new
+            .SendAsync("ReceiveNotification", new SignalRNotificationDto
             {
                 Title = title,
                 Message = message,

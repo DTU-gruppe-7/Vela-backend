@@ -21,7 +21,7 @@ public static class WebApplicationExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         
-        app.MapHub<NotificationHub>("/hubs/notifications");
+        app.MapHub<NotificationHub>("/api/hubs/notifications");
         app.MapControllers();
         
         return app;
