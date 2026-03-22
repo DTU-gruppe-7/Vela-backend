@@ -29,4 +29,5 @@ public class GroupRepository(AppDbContext context) : Repository<Group>(context),
             .Where(g => g.GroupId == groupId)
             .ToListAsync();
     }
+
 }

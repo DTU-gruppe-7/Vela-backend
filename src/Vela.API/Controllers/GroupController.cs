@@ -35,9 +35,10 @@ public class GroupController(
     [HttpGet("{id}")]
     public async Task<IActionResult> GetGroup(Guid id)
     {
-        var result = await _groupService.GetGroupAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.GetGroupAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(result.Data);
     }
@@ -55,14 +56,14 @@ public class GroupController(
         
         var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(null, groupId, groupName + "'s indkøbsliste");
         if (!shoppingListResult.Success){
-            await _groupService.DeleteGroupAsync(groupId);
+            await _groupService.DeleteGroupAsync(groupId, userId);
             return BadRequest(new { message = shoppingListResult.ErrorMessage });
         }
-        
+
         var mealPlanResult = await _mealPlanService.CreateMealPlanAsync(null, groupId, groupName + "'s madplan");
         if (!mealPlanResult.Success)
         {
-            await _groupService.DeleteGroupAsync(groupId);
+            await _groupService.DeleteGroupAsync(groupId, userId);
             return BadRequest(new { message = mealPlanResult.ErrorMessage });
         }
             
@@ -73,9 +74,10 @@ public class GroupController(
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteGroup(Guid id)
     {
-        var result = await _groupService.DeleteGroupAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.DeleteGroupAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(new { message = "Group deleted successfully" });
     }
@@ -83,9 +85,10 @@ public class GroupController(
     [HttpDelete("{id}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(Guid id, string userId)
     {
-        var result = await _groupService.RemoveMemberAsync(id, userId);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.RemoveMemberAsync(id, userId, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(new { message = "Member removed successfully" });
     }
@@ -100,22 +103,49 @@ public class GroupController(
         return Ok(result.Data);
     }
 
+    [HttpPatch("{id}/members/{userId}/role")]
+    public async Task<IActionResult> ChangeMemberRole(Guid id, string userId, [FromBody] ChangeRoleRequest request)
+    {
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.ChangeMemberRoleAsync(id, userId, request.NewRole, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Role updated successfully" });
+    }
+
+    [HttpPost("{id}/leave")]
+    public async Task<IActionResult> LeaveGroup(Guid id)
+    {
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.LeaveGroupAsync(id, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "You have left the group" });
+    }
+
+    [HttpPatch("{id}/transfer-ownership")]
+    public async Task<IActionResult> TransferOwnership(Guid id, [FromBody] TransferOwnershipRequest request)
+    {
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.TransferOwnershipAsync(id, request.NewOwnerUserId, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Ownership transferred successfully" });
+    }
+
     // Invites
     [HttpPost("{id}/invites")]
     public async Task<IActionResult> SendInvite(Guid id, [FromBody] SendInviteRequest request)
     {
-        var user = await  _userManager.FindByEmailAsync(request.Email);
+        var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
-        {
             return NotFound(new { message = "Der findes ingen bruger med denne e-mail adresse." });
-        }
-        
-        var existingInvites = await _groupInviteService.GetInvitesByGroupIdAsync(id);
-        if (existingInvites.Data != null && existingInvites.Data.Any(i => i.UserId == user.Id))
-        {
-            return BadRequest(new { message = "Der er allerede sendt en invitation til denne bruger for denne gruppe." });
-        }
-        var result = await _groupInviteService.SendInviteAsync(user.Id, id);
+
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupInviteService.SendInviteAsync(user.Id, id, callerUserId);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 
@@ -125,7 +155,11 @@ public class GroupController(
     [HttpGet("{id}/invites")]
     public async Task<IActionResult> GetInvitesByGroup(Guid id)
     {
-        var result = await _groupInviteService.GetInvitesByGroupIdAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupInviteService.GetInvitesByGroupIdAsync(id, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
         return Ok(result.Data);
     }
 
