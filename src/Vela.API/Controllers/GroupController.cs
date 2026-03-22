@@ -9,16 +9,12 @@ namespace Vela.API.Controllers;
 
 [Authorize]
 public class GroupController(
-    IGroupService groupService, 
-    IGroupInviteService groupInviteService, 
-    IShoppingListService shoppingListService, 
-    IMealPlanService mealPlanService,
+    IGroupService groupService,
+    IGroupInviteService groupInviteService,
     UserManager<AppUser> userManager) : BaseApiController
 {
     private readonly IGroupService _groupService = groupService;
     private readonly IGroupInviteService _groupInviteService = groupInviteService;
-    private readonly IMealPlanService _mealPlanService = mealPlanService;
-    private readonly IShoppingListService _shoppingListService = shoppingListService;
     private readonly UserManager<AppUser> _userManager = userManager;
     
 
@@ -47,27 +43,10 @@ public class GroupController(
     public async Task<ActionResult<GroupDto>> CreateGroup([FromBody] CreateGroupRequest request)
     {
         var userId = GetCurrentUserId();
-        var result = await _groupService.CreateGroupAsync(userId, request);
+        var result = await _groupService.CreateGroupWithResourcesAsync(userId, request);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
-        
-        var groupId = result.Data.Id;
-        var groupName = result.Data.Name;
-        
-        var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(null, groupId, groupName + "'s indkøbsliste");
-        if (!shoppingListResult.Success){
-            await _groupService.DeleteGroupAsync(groupId, userId);
-            return BadRequest(new { message = shoppingListResult.ErrorMessage });
-        }
 
-        var mealPlanResult = await _mealPlanService.CreateMealPlanAsync(null, groupId, groupName + "'s madplan");
-        if (!mealPlanResult.Success)
-        {
-            await _groupService.DeleteGroupAsync(groupId, userId);
-            return BadRequest(new { message = mealPlanResult.ErrorMessage });
-        }
-            
-        
         return Ok(result.Data);
     }
 
@@ -96,9 +75,10 @@ public class GroupController(
     [HttpGet("{id}/matches")]
     public async Task<IActionResult> GetMatches(Guid id)
     {
-        var result = await _groupService.GetMatchesAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.GetMatchesAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(result.Data);
     }
