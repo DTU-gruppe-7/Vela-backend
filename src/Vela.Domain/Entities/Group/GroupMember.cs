@@ -1,6 +1,6 @@
 using Vela.Domain.Enums;
 
-namespace Vela.Domain.Entities;
+namespace Vela.Domain.Entities.Group;
 
 public class GroupMember
 {

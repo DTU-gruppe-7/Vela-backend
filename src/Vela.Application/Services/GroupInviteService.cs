@@ -3,7 +3,7 @@ using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Application.Interfaces.Service.Notification;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
 using Vela.Domain.Enums;
 
 namespace Vela.Application.Services;

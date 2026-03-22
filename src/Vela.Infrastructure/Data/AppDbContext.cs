@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
+using Vela.Domain.Entities.MealPlan;
 using Vela.Domain.Entities.Notification;
+using Vela.Domain.Entities.Recipe;
 using Vela.Infrastructure.Identity;
 
 namespace Vela.Infrastructure.Data;

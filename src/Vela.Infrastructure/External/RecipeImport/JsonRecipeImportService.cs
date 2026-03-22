@@ -2,7 +2,7 @@
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.External;
 using Vela.Application.Interfaces.Repository;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.Recipe;
 
 namespace Vela.Infrastructure.External.RecipeImport;
 

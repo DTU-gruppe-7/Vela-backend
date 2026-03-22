@@ -1,4 +1,4 @@
-﻿namespace Vela.Domain.Entities;
+﻿namespace Vela.Domain.Entities.Recipe;
 
 public class RecipeIngredient
 {

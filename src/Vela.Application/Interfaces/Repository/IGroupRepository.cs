@@ -1,3 +1,4 @@
+using Vela.Domain.Entities.Group;
 using Vela.Domain.Entities;
 
 namespace Vela.Application.Interfaces.Repository;
