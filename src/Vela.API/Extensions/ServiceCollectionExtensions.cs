@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
 using Microsoft.OpenApi;
 using Vela.API.Notification;
@@ -99,7 +99,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         
         //Notifications
-        services.AddSignalR();
+        services.AddSignalR()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
+            });
         
         return services;
     }
