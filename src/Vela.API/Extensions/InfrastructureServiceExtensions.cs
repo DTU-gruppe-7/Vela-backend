@@ -86,6 +86,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         //Services
         services.AddScoped<IAuthService, AuthService>();

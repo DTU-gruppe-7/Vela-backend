@@ -13,13 +13,15 @@ public class GroupService(
     IMealPlanRepository mealPlanRepository,
     IShoppingListRepository shoppingListRepository,
     ILikeRepository likeRepository,
-    ILikeService likeService) : IGroupService
+    ILikeService likeService,
+    IUserRepository userRepository) : IGroupService
 {
     private readonly IGroupRepository _groupRepository = groupRepository;
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly ILikeRepository _likeRepository = likeRepository;
     private readonly ILikeService _likeService = likeService;
+    private readonly IUserRepository _userRepository = userRepository;
 
     public async Task<Result<GroupDto>> CreateGroupAsync(string userId, CreateGroupRequest request)
     {
@@ -46,7 +48,8 @@ public class GroupService(
 
         await _likeService.RecalculateGroupMatchesAsync(group);
 
-        return Result<GroupDto>.Ok(MapToDto(group));
+        var profiles = await _userRepository.GetUserProfilesByIdsAsync(group.Members.Select(m => m.UserId));
+        return Result<GroupDto>.Ok(MapToDto(group, profiles));
     }
 
     public async Task<Result<GroupDto>> GetGroupAsync(Guid groupId)
@@ -55,13 +58,17 @@ public class GroupService(
         if (group == null)
             return Result<GroupDto>.Fail($"Group with ID {groupId} not found");
 
-        return Result<GroupDto>.Ok(MapToDto(group));
+        var profiles = await _userRepository.GetUserProfilesByIdsAsync(group.Members.Select(m => m.UserId));
+        return Result<GroupDto>.Ok(MapToDto(group, profiles));
     }
 
     public async Task<Result<IEnumerable<GroupDto>>> GetGroupsByUserIdAsync(string userId)
     {
         var groups = await _groupRepository.GetGroupsByUserIdAsync(userId);
-        return Result<IEnumerable<GroupDto>>.Ok(groups.Select(MapToDto));
+        var groupList = groups.Where(g => g != null).Select(g => g!).ToList();
+        var allUserIds = groupList.SelectMany(g => g.Members.Select(m => m.UserId)).Distinct();
+        var profiles = await _userRepository.GetUserProfilesByIdsAsync(allUserIds);
+        return Result<IEnumerable<GroupDto>>.Ok(groupList.Select(g => MapToDto(g, profiles)));
     }
 
     public async Task<Result> DeleteGroupAsync(Guid groupId)
@@ -123,7 +130,7 @@ public class GroupService(
         return Result<IEnumerable<MatchDto>>.Ok(matches.Select(MapMatchToDto));
     }
 
-private GroupDto MapToDto(Group group)
+private GroupDto MapToDto(Group group, IReadOnlyDictionary<string, (string FirstName, string LastName, string Email)> profiles)
     {
         return new GroupDto
         {
@@ -132,16 +139,20 @@ private GroupDto MapToDto(Group group)
             Status = group.Status,
             CreatedAt = group.CreatedAt,
             UpdatedAt = group.UpdatedAt,
-            Members = group.Members.Select(MapMemberToDto).ToList()
+            Members = group.Members.Select(m => MapMemberToDto(m, profiles)).ToList()
         };
     }
 
-    private GroupMemberDto MapMemberToDto(GroupMember member)
+    private GroupMemberDto MapMemberToDto(GroupMember member, IReadOnlyDictionary<string, (string FirstName, string LastName, string Email)> profiles)
     {
+        profiles.TryGetValue(member.UserId, out var profile);
         return new GroupMemberDto
         {
             GroupId = member.GroupId,
             UserId = member.UserId,
+            FirstName = profile.FirstName ?? string.Empty,
+            LastName = profile.LastName ?? string.Empty,
+            Email = profile.Email ?? string.Empty,
             Role = member.Role,
             JoinedAt = member.JoinedAt
         };
