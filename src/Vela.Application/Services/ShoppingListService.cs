@@ -62,12 +62,12 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         });
     }
 
-    public async Task<Result<ShoppingListDto>> GetShoppingListById(Guid id)
+    public async Task<Result<ShoppingListDto?>> GetShoppingListById(Guid id)
     {
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
         
         if (shoppingList == null)
-            return Result<ShoppingListDto>.Fail("ShoppingList not found");
+            return Result<ShoppingListDto?>.Fail("ShoppingList not found");
 
         var dto = new ShoppingListDto
         {
@@ -232,10 +232,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     }
     
     public async Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(
-        Guid mealPlanId,
-        string currentUserId,
-        Guid? targetShoppingListId = null,
-        Guid? groupId = null)
+        Guid mealPlanId)
     {
         var mealPlan = await _mealPlanRepository.GetByIdWithEntriesAsync(mealPlanId);
         if (mealPlan == null)
@@ -243,29 +240,21 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
 
         ShoppingList shoppingList;
 
-        if (targetShoppingListId.HasValue)
+        if (mealPlan.GroupId.HasValue)
         {
-            var found = await _shoppingListRepository.GetByIdWithItemsAsync(targetShoppingListId.Value);
-            if (found == null)
-                return Result<ShoppingListDto?>.Fail("Existing shopping list not found");
-            shoppingList = found;
+            var groupShoppingList = await _shoppingListRepository.GetByGroupIdAsync(mealPlan.GroupId.Value);
+            if (groupShoppingList == null)
+                return Result<ShoppingListDto?>.Fail("Group shopping list not found");
+            shoppingList = groupShoppingList;
         }
         else
         {
-            shoppingList = new ShoppingList
-            {
-                Id = Guid.NewGuid(),
-                UserId = string.IsNullOrWhiteSpace(currentUserId) ? null : currentUserId,
-                GroupId = groupId,
-                Name = $"Indkøb til {mealPlan.Name}",
-                CreatedAt = DateTimeOffset.UtcNow,
-                Items = new List<ShoppingListItem>()
-            };
-
-            await _shoppingListRepository.AddAsync(shoppingList);
+            var userShoppingList = await _shoppingListRepository.GetByUserIdAsync(mealPlan.UserId);
+            if (userShoppingList == null)
+                return Result<ShoppingListDto?>.Fail("User shopping list not found");
+            
+            shoppingList = userShoppingList;
         }
-
-        shoppingList.Items ??= new List<ShoppingListItem>();
 
         // 1) Aggregate all normalized ingredient totals from meal plan
         var totals = new Dictionary<(String IngredientName, string? Unit), double>();

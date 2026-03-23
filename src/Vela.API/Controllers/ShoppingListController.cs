@@ -77,23 +77,10 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     
     [HttpPost("from-mealplan/{mealPlanId}")]
     public async Task<ActionResult<ShoppingListDto>> AddFromMealPlan(
-        Guid mealPlanId, 
-        [FromQuery] Guid? existingListId = null, 
-        [FromQuery] Guid? groupId = null)
+        Guid mealPlanId)
     {
-        var userId = string.Empty;
-        
-        if (groupId == null)
-        {
-            userId = GetCurrentUserId(); 
-            if (string.IsNullOrEmpty(userId)) return Unauthorized();
-        }
-        
         var result = await _shoppingListService.GenerateFromMealPlanAsync(
-            mealPlanId, 
-            userId, 
-            existingListId, 
-            groupId);
+            mealPlanId);
 
         if (!result.Success)
             return BadRequest(result.ErrorMessage);

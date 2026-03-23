@@ -3,7 +3,7 @@ using Vela.Application.DTOs.MealPlan;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.MealPlan;
 
 namespace Vela.Application.Services;
 

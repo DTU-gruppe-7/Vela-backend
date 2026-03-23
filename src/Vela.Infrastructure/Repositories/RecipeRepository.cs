@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities;
+using Vela.Domain.Entities.Recipe;
 using Vela.Domain.Enums;
 using Vela.Infrastructure.Data;
 

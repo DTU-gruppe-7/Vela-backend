@@ -1,6 +1,6 @@
 using Vela.Application.Common;
 using Vela.Application.DTOs;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
 
 namespace Vela.Application.Interfaces.Service;
 

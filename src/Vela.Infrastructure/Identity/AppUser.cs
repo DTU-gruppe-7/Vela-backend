@@ -21,6 +21,4 @@ public class AppUser : IdentityUser
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public bool IsActive { get; set; } = true;
     
-    // Navigation properties
-    public List<MealPlan> MealPlans { get; set; } = new();
 }
