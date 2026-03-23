@@ -1,5 +1,5 @@
 using Vela.Application.Common;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
 using Vela.Domain.Enums;
 
 namespace Vela.Application.Interfaces.Service;
