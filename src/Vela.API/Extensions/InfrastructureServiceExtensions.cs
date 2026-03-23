@@ -94,6 +94,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<ILikeService, LikeService>();
         services.AddScoped<IShoppingListService, ShoppingListService>();
         services.AddScoped<IMealPlanService, MealPlanService>();
+        services.AddScoped<IGroupAuthorizationService, GroupAuthorizationService>();
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IGroupInviteService, GroupInviteService>();
         services.AddScoped<INotificationService, NotificationService>();
