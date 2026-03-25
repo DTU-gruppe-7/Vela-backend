@@ -483,7 +483,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("RecipeIngredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingList", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -513,7 +513,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("ShoppingLists");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingListItem", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingListItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -814,7 +814,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Recipe");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingList", b =>
                 {
                     b.HasOne("Vela.Domain.Entities.Group.Group", null)
                         .WithMany()
@@ -827,9 +827,9 @@ namespace Vela.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingListItem", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingListItem", b =>
                 {
-                    b.HasOne("Vela.Domain.Entities.ShoppingList", null)
+                    b.HasOne("Vela.Domain.Entities.ShoppingList.ShoppingList", null)
                         .WithMany("Items")
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -853,7 +853,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Ingredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingList", b =>
                 {
                     b.Navigation("Items");
                 });

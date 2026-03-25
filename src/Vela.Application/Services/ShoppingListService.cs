@@ -2,7 +2,7 @@
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.ShoppingList;
 
 namespace Vela.Application.Services;
 

@@ -2,9 +2,10 @@ using Vela.Application.Common;
 using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.ShoppingList;
 using Vela.Domain.Entities.Group;
 using Vela.Domain.Entities.MealPlan;
+using Vela.Domain.Entities;
 using Vela.Domain.Enums;
 
 namespace Vela.Application.Services;

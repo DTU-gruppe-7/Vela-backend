@@ -6,6 +6,7 @@ using Vela.Domain.Entities.MealPlan;
 using Vela.Domain.Entities.Notification;
 using Vela.Domain.Entities.Recipe;
 using Vela.Infrastructure.Identity;
+using Vela.Domain.Entities.ShoppingList;
 
 namespace Vela.Infrastructure.Data;
 

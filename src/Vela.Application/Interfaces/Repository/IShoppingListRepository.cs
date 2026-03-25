@@ -1,5 +1,5 @@
 ﻿using Vela.Application.DTOs;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.ShoppingList;
 
 namespace Vela.Application.Interfaces.Repository;
 

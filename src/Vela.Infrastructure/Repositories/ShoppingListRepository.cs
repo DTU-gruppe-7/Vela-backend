@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.ShoppingList;
 using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
