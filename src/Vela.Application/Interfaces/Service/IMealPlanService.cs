@@ -14,4 +14,5 @@ public interface IMealPlanService
     Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId);
     Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int servings);
     Task<Result<MealPlanDto>> GetMealPlanWithEntriesAsync(Guid mealPlanId);
+    Task<Result<IEnumerable<MealPlanEntryDto>>> GetAggregatedMealPlanAsync(string userId);
 }

@@ -80,4 +80,16 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         return Ok(new { message = "Meal plan entry servings updated successfully" });
     }
     
+    [HttpGet("aggregated")]
+    public async Task<ActionResult<IEnumerable<MealPlanEntryDto>>> GetAggregatedMealPlan()
+    {
+        var currentUserID = GetCurrentUserId();
+        var result = await _mealPlanService.GetAggregatedMealPlanAsync(currentUserID);
+        
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+        
+        return Ok(result.Data);
+    }
+    
 }
