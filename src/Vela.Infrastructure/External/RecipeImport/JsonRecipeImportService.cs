@@ -72,10 +72,10 @@ public class JsonRecipeImportService : IRecipeImportService
             {
                 var (quantity, unit, ingredientName) = DanishMeasureParser.Parse(line);
 
-                if (string.IsNullOrWhiteSpace(ingredientName))
+                if (string.IsNullOrWhiteSpace(ingredientName) || DanishMeasureParser.IsJunk(ingredientName))
                     continue;
 
-                var ingredient = await GetOrCreateIngredientAsync(ingredientName, ingredientCache);
+                var ingredient = await GetOrCreateIngredientAsync(ingredientName, unit, ingredientCache);
 
                 var recipeIngredient = new RecipeIngredient
                 {
@@ -97,6 +97,7 @@ public class JsonRecipeImportService : IRecipeImportService
 
     private async Task<Ingredient> GetOrCreateIngredientAsync(
         string name,
+        string parsedUnit,
         Dictionary<string, Ingredient> ingredientCache)
     {
         var normalizedName = name.ToLower().Trim();
@@ -113,15 +114,21 @@ public class JsonRecipeImportService : IRecipeImportService
             return existing;
         }
 
-        // 3. Opret ny ingredient og gem i cache
+        // 3. Klassificer og opret ny ingredient
+        var category = IngredientClassifier.Classify(normalizedName);
+        var (containsGluten, containsLactose, containsNuts, isVegan) = IngredientClassifier.DetectAllergens(normalizedName);
+        var defaultUnit = IngredientClassifier.GetDefaultUnit(normalizedName, category);
+
         var newIngredient = new Ingredient
         {
             Id = Guid.NewGuid(),
             Name = normalizedName,
-            ContainsGluten = false,
-            ContainsLactose = false,
-            ContainsNuts = false,
-            IsVegan = false
+            Unit = defaultUnit,
+            Category = category,
+            ContainsGluten = containsGluten,
+            ContainsLactose = containsLactose,
+            ContainsNuts = containsNuts,
+            IsVegan = isVegan,
         };
 
         await _ingredientRepository.AddAsync(newIngredient);

@@ -53,11 +53,12 @@ public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(con
             .FirstOrDefaultAsync(mpe => mpe.Id == entryId);
     }
 
-    public async Task<MealPlan?> GetByIdWithEntriesAsync(Guid id)
+    public async Task<MealPlan?> GetByIdWithEntriesByDateRangeAsync(Guid id, DateOnly startDate, DateOnly endDate)
     {
         return await _context.MealPlans
             .AsSplitQuery()
-            .Include(mp => mp.Entries)
+            .Include(mp => mp.Entries.Where(
+                e => e.Date >= startDate && e.Date <= endDate))
             .ThenInclude(e => e.Recipe)
             .ThenInclude(r => r.Ingredients)
             .ThenInclude(ri => ri.Ingredient)

@@ -78,4 +78,14 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         _context.Set<ShoppingListItem>().Remove(item);
         return item;
     }
+
+    public async Task DeleteItemsByMealPlanEntryIdAsync(Guid mealPlanEntryId)
+    {
+        var items = await _context.Set<ShoppingListItem>()
+            .Where(sl => sl.MealPlanEntryId == mealPlanEntryId)
+            .ToListAsync();
+        
+        if(items.Count > 0)
+            _context.Set<ShoppingListItem>().RemoveRange(items);
+    }
 }

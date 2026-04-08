@@ -94,6 +94,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             .WithMany(sl => sl.Items)
             .HasForeignKey(sl => sl.ShoppingListId)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<ShoppingListItem>()
+            .HasOne<MealPlanEntry>()
+            .WithMany()
+            .HasForeignKey(i => i.MealPlanEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // MealPlanEntry configuration
         modelBuilder.Entity<MealPlanEntry>()

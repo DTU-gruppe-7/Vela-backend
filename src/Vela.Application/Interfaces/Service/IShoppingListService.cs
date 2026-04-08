@@ -1,5 +1,5 @@
 ﻿using Vela.Application.Common;
-using Vela.Application.DTOs;
+using Vela.Application.DTOs.ShoppingList;
 
 namespace Vela.Application.Interfaces.Service;
 
@@ -12,7 +12,6 @@ public interface IShoppingListService
     Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, string userId, AddShoppingListItemDto dto);
     Task<Result> DeleteItemAsync(Guid itemId);
     Task<Result> DeleteShoppingListAsync(Guid id);
-    Task<Result<ShoppingListDto>> UpdateShoppingListAsync(Guid id, UpdateShoppingListDto dto);
-    Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(Guid mealPlanId);
+    Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(Guid mealPlanId, DateOnly startDate, DateOnly endDate);
     Task<Result> AssignItemToUserAsync(Guid itemId, string targetUserId);
 }   

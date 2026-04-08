@@ -10,4 +10,5 @@ public class MealPlanEntryDto
     public int Servings { get; set; }
     public DateTimeOffset AddedAt { get; set; }
     public RecipeSummaryDto? Recipe { get; set; }
+    public bool AddedToShoppingList { get; set; }
 }

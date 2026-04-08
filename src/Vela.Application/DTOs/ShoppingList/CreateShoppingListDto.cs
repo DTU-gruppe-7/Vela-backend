@@ -1,4 +1,4 @@
-﻿namespace Vela.Application.DTOs;
+﻿namespace Vela.Application.DTOs.ShoppingList;
 
 public class CreateShoppingListDto
 {
