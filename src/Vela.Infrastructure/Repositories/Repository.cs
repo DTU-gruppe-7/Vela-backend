@@ -14,7 +14,7 @@ public class Repository<T>(AppDbContext context) : IRepository<T> where T : clas
         await _dbSet.AddAsync(entity);
     }
 
-    public virtual async Task<T?> GetByUuidAsync(Guid uuid)
+    public virtual async Task<T?> GetByUuidAsync(Guid? uuid)
     {
         return await _dbSet.FindAsync(uuid);
     }

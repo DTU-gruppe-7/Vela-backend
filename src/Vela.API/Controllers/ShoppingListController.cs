@@ -1,7 +1,6 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Vela.Application.DTOs;
+using Vela.Application.DTOs.ShoppingList;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
@@ -30,16 +29,6 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
             return Ok(result.Data);
         }
 
-    }
-    
-    [HttpPatch("{id}")]
-    public async Task<ActionResult<ShoppingListDto>> UpdateShoppingList(Guid id, [FromBody] UpdateShoppingListDto dto)
-    {
-        var result = await _shoppingListService.UpdateShoppingListAsync(id, dto);
-        if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
-        return Ok(result.Data);
     }
 
     [HttpPost("{id}/items")]
@@ -77,10 +66,17 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     
     [HttpPost("from-mealplan/{mealPlanId}")]
     public async Task<ActionResult<ShoppingListDto>> AddFromMealPlan(
-        Guid mealPlanId)
+        Guid mealPlanId,
+        [FromQuery] DateOnly startDate,
+        [FromQuery] DateOnly endDate)
     {
+        if (startDate > endDate)
+        {
+            return BadRequest(new { message = "Start date must be before end date" });
+        }
+
         var result = await _shoppingListService.GenerateFromMealPlanAsync(
-            mealPlanId);
+            mealPlanId, startDate, endDate);
 
         if (!result.Success)
             return BadRequest(result.ErrorMessage);

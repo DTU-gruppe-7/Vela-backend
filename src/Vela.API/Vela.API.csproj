@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>9568cc8a-a773-4a4b-bbb8-2a82a55a9a83</UserSecretsId>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,5 +24,9 @@
     <ProjectReference Include="..\Vela.Application\Vela.Application.csproj" />
     <ProjectReference Include="..\Vela.Infrastructure\Vela.Infrastructure.csproj" />
   </ItemGroup>
+<ItemGroup>
+  <None Remove="bin/**;obj/**" />
+  <Content Remove="bin/**;obj/**" />
+</ItemGroup>
 
 </Project>

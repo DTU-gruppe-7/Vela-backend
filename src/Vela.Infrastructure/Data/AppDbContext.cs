@@ -50,9 +50,25 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         modelBuilder.Entity<RecipeIngredient>()
             .HasIndex(ri => new { ri.RecipeId, ri.IngredientId });
 
+        // Ingredient indexes for filtering and uniqueness
         modelBuilder.Entity<Ingredient>()
             .HasIndex(i => i.Name)
             .IsUnique();
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.Category);
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.IsVegan);
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.ContainsGluten);
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.ContainsLactose);
+
+        modelBuilder.Entity<Ingredient>()
+            .HasIndex(i => i.ContainsNuts);
         
         modelBuilder.Entity<Like>()
             .HasKey(s => s.LikeId);
@@ -93,6 +109,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             .HasOne<ShoppingList>()
             .WithMany(sl => sl.Items)
             .HasForeignKey(sl => sl.ShoppingListId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        modelBuilder.Entity<ShoppingListItem>()
+            .HasOne<MealPlanEntry>()
+            .WithMany()
+            .HasForeignKey(i => i.MealPlanEntryId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // MealPlanEntry configuration

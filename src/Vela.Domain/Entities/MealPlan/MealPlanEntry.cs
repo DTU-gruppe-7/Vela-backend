@@ -17,5 +17,5 @@ public class MealPlanEntry
     public int Servings { get; set; } = 4;
     public DateTimeOffset AddedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public bool AddedToShoppingList { get; set; }
+    public bool AddedToShoppingList { get; set; } = false;
 }

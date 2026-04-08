@@ -7,10 +7,15 @@ using Vela.Domain.Entities.MealPlan;
 
 namespace Vela.Application.Services;
 
-public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepository recipeRepository, IGroupRepository groupRepository) : IMealPlanService
+public class MealPlanService(
+    IMealPlanRepository mealPlanRepository, 
+    IRecipeRepository recipeRepository,
+    IShoppingListRepository shoppingListRepository,
+    IGroupRepository groupRepository) : IMealPlanService
 {
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IRecipeRepository _recipeRepository  = recipeRepository;
+    private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
 
     public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId)
@@ -127,6 +132,8 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
 
         if (entry.MealPlanId != mealPlanId)
             return Result.Fail("Entry does not belong to this meal plan");
+        
+        await _shoppingListRepository.DeleteItemsByMealPlanEntryIdAsync(entryId);
 
         await _mealPlanRepository.RemoveEntryAsync(entryId);
         await _mealPlanRepository.SaveChangesAsync();
@@ -236,7 +243,8 @@ public class MealPlanService(IMealPlanRepository mealPlanRepository, IRecipeRepo
             MealType = entry.MealType,
             Servings = entry.Servings,
             AddedAt = entry.AddedAt,
-            Recipe = recipeDto
+            Recipe = recipeDto,
+            AddedToShoppingList = entry.AddedToShoppingList
         };
     }
 }

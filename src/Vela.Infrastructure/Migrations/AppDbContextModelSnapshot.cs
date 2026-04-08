@@ -383,6 +383,9 @@ namespace Vela.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("ContainsGluten")
                         .HasColumnType("boolean");
 
@@ -397,9 +400,24 @@ namespace Vela.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("ContainsGluten");
+
+                    b.HasIndex("ContainsLactose");
+
+                    b.HasIndex("ContainsNuts");
+
+                    b.HasIndex("IsVegan");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -525,12 +543,21 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("IngredientId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("IngredientName")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsBought")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("ItemCategory")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("MealPlanEntryId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal?>("Price")
                         .HasColumnType("numeric");
@@ -551,6 +578,8 @@ namespace Vela.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MealPlanEntryId");
 
                     b.HasIndex("ShoppingListId");
 
@@ -829,6 +858,11 @@ namespace Vela.Infrastructure.Migrations
 
             modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingListItem", b =>
                 {
+                    b.HasOne("Vela.Domain.Entities.MealPlan.MealPlanEntry", null)
+                        .WithMany()
+                        .HasForeignKey("MealPlanEntryId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("Vela.Domain.Entities.ShoppingList.ShoppingList", null)
                         .WithMany("Items")
                         .HasForeignKey("ShoppingListId")

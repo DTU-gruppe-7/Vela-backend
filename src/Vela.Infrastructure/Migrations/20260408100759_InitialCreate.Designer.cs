@@ -12,8 +12,8 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260322084059_bugfixes")]
-    partial class bugfixes
+    [Migration("20260408100759_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -386,6 +386,9 @@ namespace Vela.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<int>("Category")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("ContainsGluten")
                         .HasColumnType("boolean");
 
@@ -400,9 +403,24 @@ namespace Vela.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("ContainsGluten");
+
+                    b.HasIndex("ContainsLactose");
+
+                    b.HasIndex("ContainsNuts");
+
+                    b.HasIndex("IsVegan");
 
                     b.HasIndex("Name")
                         .IsUnique();
@@ -486,7 +504,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("RecipeIngredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingList", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -516,7 +534,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("ShoppingLists");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingListItem", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingListItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -528,12 +546,21 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("IngredientId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("IngredientName")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("IsBought")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("ItemCategory")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("MealPlanEntryId")
+                        .HasColumnType("uuid");
 
                     b.Property<decimal?>("Price")
                         .HasColumnType("numeric");
@@ -554,6 +581,8 @@ namespace Vela.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MealPlanEntryId");
 
                     b.HasIndex("ShoppingListId");
 
@@ -817,7 +846,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Recipe");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingList", b =>
                 {
                     b.HasOne("Vela.Domain.Entities.Group.Group", null)
                         .WithMany()
@@ -830,9 +859,14 @@ namespace Vela.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingListItem", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingListItem", b =>
                 {
-                    b.HasOne("Vela.Domain.Entities.ShoppingList", null)
+                    b.HasOne("Vela.Domain.Entities.MealPlan.MealPlanEntry", null)
+                        .WithMany()
+                        .HasForeignKey("MealPlanEntryId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Vela.Domain.Entities.ShoppingList.ShoppingList", null)
                         .WithMany("Items")
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -856,7 +890,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Ingredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingList", b =>
                 {
                     b.Navigation("Items");
                 });
