@@ -12,8 +12,8 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260408073733_IngredientExtension")]
-    partial class IngredientExtension
+    [Migration("20260408100759_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -403,13 +403,24 @@ namespace Vela.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("ContainsGluten");
+
+                    b.HasIndex("ContainsLactose");
+
+                    b.HasIndex("ContainsNuts");
+
+                    b.HasIndex("IsVegan");
 
                     b.HasIndex("Name")
                         .IsUnique();

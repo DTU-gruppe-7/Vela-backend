@@ -400,13 +400,24 @@ namespace Vela.Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("ContainsGluten");
+
+                    b.HasIndex("ContainsLactose");
+
+                    b.HasIndex("ContainsNuts");
+
+                    b.HasIndex("IsVegan");
 
                     b.HasIndex("Name")
                         .IsUnique();

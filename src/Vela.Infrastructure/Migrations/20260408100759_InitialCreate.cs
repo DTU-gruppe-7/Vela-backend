@@ -81,7 +81,9 @@ namespace Vela.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Unit = table.Column<string>(type: "text", nullable: false),
+                    Category = table.Column<int>(type: "integer", nullable: false),
                     ContainsGluten = table.Column<bool>(type: "boolean", nullable: false),
                     ContainsLactose = table.Column<bool>(type: "boolean", nullable: false),
                     ContainsNuts = table.Column<bool>(type: "boolean", nullable: false),
@@ -220,12 +222,35 @@ namespace Vela.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    Title = table.Column<string>(type: "text", nullable: false),
+                    Message = table.Column<string>(type: "text", nullable: true),
+                    NotificationType = table.Column<int>(type: "integer", nullable: false),
+                    RelatedEntityId = table.Column<Guid>(type: "uuid", nullable: false),
+                    IsRead = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "GroupInvites",
                 columns: table => new
                 {
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    Status = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
@@ -246,12 +271,18 @@ namespace Vela.Infrastructure.Migrations
                 {
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
-                    Role = table.Column<string>(type: "text", nullable: true),
+                    Role = table.Column<string>(type: "text", nullable: false),
                     JoinedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GroupMembers", x => new { x.GroupId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_GroupMembers_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_GroupMembers_Groups_GroupId",
                         column: x => x.GroupId,
@@ -270,17 +301,11 @@ namespace Vela.Infrastructure.Migrations
                     Name = table.Column<string>(type: "text", nullable: true),
                     Description = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    AppUserId = table.Column<string>(type: "text", nullable: true)
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_MealPlans", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MealPlans_AspNetUsers_AppUserId",
-                        column: x => x.AppUserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_MealPlans_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -324,17 +349,37 @@ namespace Vela.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Likes",
+                columns: table => new
+                {
+                    LikeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    RecipeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Direction = table.Column<int>(type: "integer", nullable: false),
+                    SwipedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Likes", x => x.LikeId);
+                    table.ForeignKey(
+                        name: "FK_Likes_Recipes_RecipeId",
+                        column: x => x.RecipeId,
+                        principalTable: "Recipes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Matches",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     GroupId = table.Column<Guid>(type: "uuid", nullable: false),
                     RecipeId = table.Column<Guid>(type: "uuid", nullable: false),
                     MatchedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Matches", x => x.Id);
+                    table.PrimaryKey("PK_Matches", x => new { x.GroupId, x.RecipeId });
                     table.ForeignKey(
                         name: "FK_Matches_Groups_GroupId",
                         column: x => x.GroupId,
@@ -369,30 +414,9 @@ namespace Vela.Infrastructure.Migrations
                         column: x => x.IngredientId,
                         principalTable: "Ingredients",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_RecipeIngredients_Recipes_RecipeId",
-                        column: x => x.RecipeId,
-                        principalTable: "Recipes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SwipeRecipes",
-                columns: table => new
-                {
-                    SwipeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    RecipeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Direction = table.Column<int>(type: "integer", nullable: false),
-                    SwipedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SwipeRecipes", x => x.SwipeId);
-                    table.ForeignKey(
-                        name: "FK_SwipeRecipes_Recipes_RecipeId",
                         column: x => x.RecipeId,
                         principalTable: "Recipes",
                         principalColumn: "Id",
@@ -409,7 +433,9 @@ namespace Vela.Infrastructure.Migrations
                     Date = table.Column<DateOnly>(type: "date", nullable: false),
                     MealType = table.Column<string>(type: "text", nullable: false),
                     Servings = table.Column<int>(type: "integer", nullable: false),
-                    AddedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                    AddedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    AddedToShoppingList = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -435,6 +461,9 @@ namespace Vela.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ShoppingListId = table.Column<Guid>(type: "uuid", nullable: false),
                     IngredientName = table.Column<string>(type: "text", nullable: false),
+                    IngredientId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ItemCategory = table.Column<int>(type: "integer", nullable: false),
+                    MealPlanEntryId = table.Column<Guid>(type: "uuid", nullable: true),
                     AssignedUserId = table.Column<string>(type: "text", nullable: true),
                     Quantity = table.Column<double>(type: "double precision", nullable: false),
                     Unit = table.Column<string>(type: "text", nullable: true),
@@ -447,6 +476,12 @@ namespace Vela.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ShoppingListItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShoppingListItems_MealPlanEntries_MealPlanEntryId",
+                        column: x => x.MealPlanEntryId,
+                        principalTable: "MealPlanEntries",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ShoppingListItems_ShoppingLists_ShoppingListId",
                         column: x => x.ShoppingListId,
@@ -493,15 +528,50 @@ namespace Vela.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_GroupMembers_UserId",
+                table: "GroupMembers",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredients_Category",
+                table: "Ingredients",
+                column: "Category");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredients_ContainsGluten",
+                table: "Ingredients",
+                column: "ContainsGluten");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredients_ContainsLactose",
+                table: "Ingredients",
+                column: "ContainsLactose");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredients_ContainsNuts",
+                table: "Ingredients",
+                column: "ContainsNuts");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredients_IsVegan",
+                table: "Ingredients",
+                column: "IsVegan");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Ingredients_Name",
                 table: "Ingredients",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Matches_GroupId_RecipeId",
-                table: "Matches",
-                columns: new[] { "GroupId", "RecipeId" },
+                name: "IX_Likes_RecipeId",
+                table: "Likes",
+                column: "RecipeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Likes_UserId_RecipeId",
+                table: "Likes",
+                columns: new[] { "UserId", "RecipeId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -525,11 +595,6 @@ namespace Vela.Infrastructure.Migrations
                 column: "RecipeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MealPlans_AppUserId",
-                table: "MealPlans",
-                column: "AppUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_MealPlans_GroupId",
                 table: "MealPlans",
                 column: "GroupId");
@@ -537,6 +602,11 @@ namespace Vela.Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_MealPlans_UserId",
                 table: "MealPlans",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_UserId",
+                table: "Notifications",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -548,6 +618,11 @@ namespace Vela.Infrastructure.Migrations
                 name: "IX_RecipeIngredients_RecipeId_IngredientId",
                 table: "RecipeIngredients",
                 columns: new[] { "RecipeId", "IngredientId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShoppingListItems_MealPlanEntryId",
+                table: "ShoppingListItems",
+                column: "MealPlanEntryId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShoppingListItems_ShoppingListId",
@@ -563,17 +638,6 @@ namespace Vela.Infrastructure.Migrations
                 name: "IX_ShoppingLists_UserId",
                 table: "ShoppingLists",
                 column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SwipeRecipes_RecipeId",
-                table: "SwipeRecipes",
-                column: "RecipeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SwipeRecipes_UserId_RecipeId",
-                table: "SwipeRecipes",
-                columns: new[] { "UserId", "RecipeId" },
-                unique: true);
         }
 
         /// <inheritdoc />
@@ -601,10 +665,13 @@ namespace Vela.Infrastructure.Migrations
                 name: "GroupMembers");
 
             migrationBuilder.DropTable(
+                name: "Likes");
+
+            migrationBuilder.DropTable(
                 name: "Matches");
 
             migrationBuilder.DropTable(
-                name: "MealPlanEntries");
+                name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "RecipeIngredients");
@@ -613,19 +680,19 @@ namespace Vela.Infrastructure.Migrations
                 name: "ShoppingListItems");
 
             migrationBuilder.DropTable(
-                name: "SwipeRecipes");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "MealPlans");
 
             migrationBuilder.DropTable(
                 name: "Ingredients");
 
             migrationBuilder.DropTable(
+                name: "MealPlanEntries");
+
+            migrationBuilder.DropTable(
                 name: "ShoppingLists");
+
+            migrationBuilder.DropTable(
+                name: "MealPlans");
 
             migrationBuilder.DropTable(
                 name: "Recipes");

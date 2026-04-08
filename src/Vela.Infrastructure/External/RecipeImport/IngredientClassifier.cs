@@ -237,12 +237,16 @@ public static class IngredientClassifier
 	{
 		var lower = name.ToLowerInvariant();
 
+		// Check vegan overrides first to avoid contradictions (e.g., plant-based milks)
+		var isVeganOverride = VeganOverrideKeywords.Any(lower.Contains);
+
 		var containsGluten = GlutenKeywords.Any(lower.Contains);
-		var containsLactose = LactoseKeywords.Any(lower.Contains);
+		// Plant-based milks should NOT be flagged as containing lactose
+		var containsLactose = !isVeganOverride && LactoseKeywords.Any(lower.Contains);
 		var containsNuts = NutKeywords.Any(lower.Contains);
 
 		bool isVegan;
-		if (VeganOverrideKeywords.Any(lower.Contains))
+		if (isVeganOverride)
 		{
 			// Plant-based milks etc. are explicitly vegan
 			isVegan = true;

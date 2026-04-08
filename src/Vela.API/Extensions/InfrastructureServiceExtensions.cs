@@ -8,8 +8,10 @@ using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.External;
 using Vela.Application.Interfaces.Service;
 using Vela.Application.Interfaces.Service.Notification;
+using Vela.Application.Interfaces.Validation;
 using Vela.Application.Services;
 using Vela.Application.Services.Notification;
+using Vela.Application.Validation;
 using Vela.Infrastructure.Data;
 using Vela.Infrastructure.Repositories;
 using Vela.Infrastructure.External.RecipeImport;
@@ -98,6 +100,9 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IGroupInviteService, GroupInviteService>();
         services.AddScoped<INotificationService, NotificationService>();
+
+        // Validation Services
+        services.AddScoped<IIngredientValidator, IngredientValidator>();
 
         // Import Service
         services.AddScoped<IRecipeImportService, JsonRecipeImportService>();
