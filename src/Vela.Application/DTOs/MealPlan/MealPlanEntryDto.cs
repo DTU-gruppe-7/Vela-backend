@@ -11,4 +11,6 @@ public class MealPlanEntryDto
     public DateTimeOffset AddedAt { get; set; }
     public RecipeSummaryDto? Recipe { get; set; }
     public bool AddedToShoppingList { get; set; }
+    public string? Source { get; set; }
+    public string? SourceGroupName { get; set; }
 }

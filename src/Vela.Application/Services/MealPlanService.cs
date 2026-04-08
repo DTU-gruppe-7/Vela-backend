@@ -10,11 +10,13 @@ namespace Vela.Application.Services;
 public class MealPlanService(
     IMealPlanRepository mealPlanRepository, 
     IRecipeRepository recipeRepository,
-    IShoppingListRepository shoppingListRepository) : IMealPlanService
+    IShoppingListRepository shoppingListRepository,
+    IGroupRepository groupRepository) : IMealPlanService
 {
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IRecipeRepository _recipeRepository  = recipeRepository;
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
+    private readonly IGroupRepository _groupRepository = groupRepository;
 
     public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId)
     {
@@ -159,6 +161,49 @@ public class MealPlanService(
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
 
+    public async Task<Result<IEnumerable<MealPlanEntryDto>>> GetAggregatedMealPlanAsync(string userId)
+    {
+        var aggregatedEntries = new List<MealPlanEntryDto>();
+        
+        // 1. hent personlige mealplan
+        var personalMealPlan = await _mealPlanRepository.GetByUserIdAsync(userId);
+        if (personalMealPlan != null)
+        {
+            var personalEntries = personalMealPlan.Entries.Select(e => { var dto = MapEntryToDto(e);
+                dto.Source = "personal";
+                return dto;
+            });
+            aggregatedEntries.AddRange(personalEntries);
+        }
+        // 2. Find brugerens grupper (for at få ID'er og Navne)
+        var groups = await _groupRepository.GetGroupsByUserIdAsync(userId);
+        var validGroups = groups.Where(g => g != null).Select(g => g!).ToList();
+        var groupIds = validGroups.Select(g => g.Id);
+        var groupDict = validGroups.ToDictionary(g => g.Id, g => g.Name);
+        
+        // 3. Batch-hent alle gruppe-madplaner
+        if (groupIds.Any())
+        {
+            var groupPlans = await _mealPlanRepository.GetByGroupIdsWithEntriesAsync(groupIds);
+            foreach (var plan in groupPlans)
+            {
+                var groupName = plan.GroupId.HasValue && groupDict.TryGetValue(plan.GroupId.Value, out var name) ? name : "Ukendt gruppe";
+            
+                var groupEntries = plan.Entries.Select(e => {
+                    var dto = MapEntryToDto(e);
+                    dto.Source = "group";
+                    dto.SourceGroupName = groupName;
+                    return dto;
+                });
+                aggregatedEntries.AddRange(groupEntries);
+            }
+        }
+        // 4. Sortering
+        var sortedEntries = aggregatedEntries
+            .OrderBy(e => e.Date)
+            .ThenBy(e => e.MealType);
+        return Result<IEnumerable<MealPlanEntryDto>>.Ok(sortedEntries);
+    }   
     private MealPlanDto MapToDto(MealPlan mealPlan)
     {
         return new MealPlanDto

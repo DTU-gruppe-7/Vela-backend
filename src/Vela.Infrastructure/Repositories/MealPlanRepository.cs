@@ -64,4 +64,16 @@ public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(con
             .ThenInclude(ri => ri.Ingredient)
             .FirstOrDefaultAsync(mp => mp.Id == id);
     }
+    
+    public async Task<IEnumerable<MealPlan>> GetByGroupIdsWithEntriesAsync(IEnumerable<Guid> groupIds)
+    {
+        var  groupIdList = groupIds.ToList();
+        if (!groupIdList.Any()) return Enumerable.Empty<MealPlan>();
+        
+        return await _context.MealPlans
+            .Include(mp => mp.Entries)
+            .ThenInclude(e => e.Recipe)
+            .Where(mp => mp.GroupId.HasValue && groupIdList.Contains(mp.GroupId.Value))
+            .ToListAsync();
+    }
 }
