@@ -34,8 +34,7 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     [HttpPost("{id}/items")]
     public async Task<ActionResult<ShoppingListItemDto>> AddItem(Guid id, [FromBody] AddShoppingListItemDto dto)
     {
-        var userId = GetCurrentUserId();
-        var result = await _shoppingListService.AddItemAsync(id, userId, dto);
+        var result = await _shoppingListService.AddItemAsync(id, dto);
 
         if (!result.Success)
             return NotFound(new { message = result.ErrorMessage });
@@ -64,23 +63,45 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         return Ok(result.Data);
     }
     
-    [HttpPost("from-mealplan/{mealPlanId}")]
+    [HttpPost("{id}/from-mealplan/{mealPlanId}")]
     public async Task<ActionResult<ShoppingListDto>> AddFromMealPlan(
+        Guid id,
         Guid mealPlanId,
         [FromQuery] DateOnly startDate,
-        [FromQuery] DateOnly endDate)
+        [FromQuery] DateOnly endDate, 
+        [FromBody] GenerateFromMealPlanRequestDto? requestDto)
     {
         if (startDate > endDate)
         {
             return BadRequest(new { message = "Start date must be before end date" });
         }
+        
+        var excludedEntryIds = requestDto?.ExcludedMealPlanEntryIds ?? new List<Guid>();
 
         var result = await _shoppingListService.GenerateFromMealPlanAsync(
-            mealPlanId, startDate, endDate);
+            mealPlanId, startDate, endDate, excludedEntryIds);
 
         if (!result.Success)
             return BadRequest(result.ErrorMessage);
 
         return Ok(result.Data);
+    }
+
+    [HttpDelete("{id}/from-mealplan/{mealPlanId}")]
+    public async Task<ActionResult> DeleteMealPlanEntry(
+        Guid id,
+        Guid mealPlanId,
+        [FromQuery] Guid mealPlanEntryId)
+    {
+        if (mealPlanEntryId == Guid.Empty)
+            return BadRequest(new { message = "There must be a meal plan entry ID provided" });
+        
+        var result = await _shoppingListService.DeleteMealPlanEntryAsync(id, mealPlanEntryId);
+
+        if (!result.Success)
+            return BadRequest(result.ErrorMessage);
+
+        return Ok(result);
+            
     }
 }

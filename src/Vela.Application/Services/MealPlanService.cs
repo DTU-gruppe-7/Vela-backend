@@ -1,9 +1,11 @@
+using System.Xml.Serialization;
 using Vela.Application.Common;
 using Vela.Application.DTOs.MealPlan;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Domain.Entities.MealPlan;
+using Vela.Domain.Entities.Recipes;
 
 namespace Vela.Application.Services;
 
@@ -18,7 +20,7 @@ public class MealPlanService(
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
 
-    public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId)
+    public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId, DateOnly startDate, DateOnly endDate)
     {
         var hasUserId = !string.IsNullOrWhiteSpace(userId);
         var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
@@ -26,7 +28,7 @@ public class MealPlanService(
         if (hasUserId == hasGroupId)
             return Result<MealPlanDto>.Fail("Mealplan must belong to either a user or a group");
 
-        var mealPlan = new MealPlan();
+        MealPlan mealPlan;
 
         if (hasUserId)
         {
@@ -36,12 +38,14 @@ public class MealPlanService(
         }
         else
         {
-            Guid foundgroupId = groupId ??Guid.Empty;
+            Guid foundgroupId = groupId ?? Guid.Empty;
             mealPlan = await _mealPlanRepository.GetByGroupIdAsync(foundgroupId);
             if (mealPlan == null)
                 return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found");
         }
-
+        
+        mealPlan = await _mealPlanRepository.GetByIdWithEntriesByDateRangeAsync(mealPlan.Id, startDate, endDate);
+        
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
     
@@ -161,7 +165,7 @@ public class MealPlanService(
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
 
-    public async Task<Result<IEnumerable<MealPlanEntryDto>>> GetAggregatedMealPlanAsync(string userId)
+    public async Task<Result<MealPlanDto>> GetAggregatedMealPlanAsync(string userId, DateOnly startDate, DateOnly endDate)
     {
         var aggregatedEntries = new List<MealPlanEntryDto>();
         
@@ -169,11 +173,15 @@ public class MealPlanService(
         var personalMealPlan = await _mealPlanRepository.GetByUserIdAsync(userId);
         if (personalMealPlan != null)
         {
-            var personalEntries = personalMealPlan.Entries.Select(e => { var dto = MapEntryToDto(e);
-                dto.Source = "personal";
-                return dto;
-            });
-            aggregatedEntries.AddRange(personalEntries);
+            var selectedPersonalMealPlan = await _mealPlanRepository.GetByIdWithEntriesByDateRangeAsync(personalMealPlan.Id, startDate, endDate);
+            if (selectedPersonalMealPlan != null)
+            {
+                var personalEntries = selectedPersonalMealPlan.Entries.Select(e => { var dto = MapEntryToDto(e);
+                    dto.Source = "personal";
+                    return dto;
+                });
+                aggregatedEntries.AddRange(personalEntries);
+            }
         }
         // 2. Find brugerens grupper (for at få ID'er og Navne)
         var groups = await _groupRepository.GetGroupsByUserIdAsync(userId);
@@ -184,25 +192,26 @@ public class MealPlanService(
         // 3. Batch-hent alle gruppe-madplaner
         if (groupIds.Any())
         {
-            var groupPlans = await _mealPlanRepository.GetByGroupIdsWithEntriesAsync(groupIds);
+            var groupPlans = await _mealPlanRepository.GetAllGroupMealPlans(groupIds);
             foreach (var plan in groupPlans)
             {
                 var groupName = plan.GroupId.HasValue && groupDict.TryGetValue(plan.GroupId.Value, out var name) ? name : "Ukendt gruppe";
-            
-                var groupEntries = plan.Entries.Select(e => {
-                    var dto = MapEntryToDto(e);
-                    dto.Source = "group";
-                    dto.SourceGroupName = groupName;
-                    return dto;
-                });
-                aggregatedEntries.AddRange(groupEntries);
+                var selectedMealPlan = await _mealPlanRepository.GetByIdWithEntriesByDateRangeAsync(plan.Id, startDate, endDate);
+                if (selectedMealPlan != null)
+                {
+                    var groupEntries = selectedMealPlan.Entries.Select(e => {
+                        var dto = MapEntryToDto(e);
+                        dto.Source = "group";
+                        dto.SourceGroupName = groupName;
+                        return dto;
+                    });
+                    aggregatedEntries.AddRange(groupEntries);
+                }
             }
         }
-        // 4. Sortering
-        var sortedEntries = aggregatedEntries
-            .OrderBy(e => e.Date)
-            .ThenBy(e => e.MealType);
-        return Result<IEnumerable<MealPlanEntryDto>>.Ok(sortedEntries);
+        var mealPlanDto = MapToDto(personalMealPlan);
+        mealPlanDto.Entries = aggregatedEntries;
+        return Result<MealPlanDto>.Ok(mealPlanDto);
     }   
     private MealPlanDto MapToDto(MealPlan mealPlan)
     {

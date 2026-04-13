@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 using Vela.Application.Interfaces.Validation;
-using Vela.Domain.Entities.Recipe;
+using Vela.Domain.Entities.Recipes;
 using Vela.Domain.Enums;
 
 namespace Vela.Application.Validation;
