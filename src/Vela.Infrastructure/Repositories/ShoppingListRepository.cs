@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities.ShoppingList;
+using Vela.Domain.Entities.Recipes;
 using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
@@ -16,6 +17,8 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         return await _dbSet
             .Include(sl => sl.Items)!
+            .ThenInclude(i => i.MealPlanEntry)
+            .ThenInclude(mpe => mpe.Recipe)
             .FirstOrDefaultAsync(sl => sl.Id == id);
     }
 
@@ -26,7 +29,9 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     public async Task<ShoppingList?> GetByUserIdAsync(string userId)
     {
         return await _dbSet
-            .Include(sl => sl.Items)! 
+            .Include(sl => sl.Items)!
+            .ThenInclude(i => i.MealPlanEntry)
+            .ThenInclude(mpe => mpe.Recipe)
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.UserId == userId);
     }
@@ -38,7 +43,9 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     public async Task<ShoppingList?> GetByGroupIdAsync(Guid groupId)
     {
         return await _dbSet
-            .Include(sl => sl.Items)! 
+            .Include(sl => sl.Items)!
+            .ThenInclude(i => i.MealPlanEntry)
+            .ThenInclude(mpe => mpe.Recipe)
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.GroupId == groupId);
     }
@@ -54,6 +61,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     public async Task<ShoppingListItem?> GetItemByIdAsync(Guid id)
     {
         return await _context.Set<ShoppingListItem>()
+            .Include(sl => sl.MealPlanEntry)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
     

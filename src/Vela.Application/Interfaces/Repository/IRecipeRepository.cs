@@ -1,4 +1,4 @@
-﻿using Vela.Domain.Entities.Recipe;
+﻿using Vela.Domain.Entities.Recipes;
 
 namespace Vela.Application.Interfaces.Repository;
 

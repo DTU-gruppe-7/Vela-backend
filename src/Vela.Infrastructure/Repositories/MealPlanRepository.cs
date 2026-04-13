@@ -19,16 +19,12 @@ public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(con
     public async Task<MealPlan?> GetByUserIdAsync(string userId)
     {
         return await _dbSet
-            .Include(mp => mp.Entries)
-            .ThenInclude(mpe => mpe.Recipe)
             .SingleOrDefaultAsync(mp => mp.UserId == userId);
     }
     
     public async Task<MealPlan?> GetByGroupIdAsync(Guid groupId)
     {
         return await _dbSet
-            .Include(mp => mp.Entries)
-            .ThenInclude(mpe => mpe.Recipe)
             .SingleOrDefaultAsync(mp => mp.GroupId == groupId);
     }
 
@@ -65,14 +61,12 @@ public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(con
             .FirstOrDefaultAsync(mp => mp.Id == id);
     }
     
-    public async Task<IEnumerable<MealPlan>> GetByGroupIdsWithEntriesAsync(IEnumerable<Guid> groupIds)
+    public async Task<IEnumerable<MealPlan>> GetAllGroupMealPlans(IEnumerable<Guid> groupIds)
     {
         var  groupIdList = groupIds.ToList();
         if (!groupIdList.Any()) return Enumerable.Empty<MealPlan>();
         
         return await _context.MealPlans
-            .Include(mp => mp.Entries)
-            .ThenInclude(e => e.Recipe)
             .Where(mp => mp.GroupId.HasValue && groupIdList.Contains(mp.GroupId.Value))
             .ToListAsync();
     }

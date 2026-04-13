@@ -1,4 +1,5 @@
-﻿using Vela.Domain.Enums;
+﻿using Vela.Domain.Entities.MealPlan;
+using Vela.Domain.Enums;
 
 namespace Vela.Domain.Entities.ShoppingList;
 
@@ -10,6 +11,7 @@ public class ShoppingListItem
     public Guid? IngredientId { get; set; }
     public IngredientCategory ItemCategory { get; set; }
     public Guid? MealPlanEntryId { get; set; }
+    public MealPlanEntry? MealPlanEntry { get; set; }
     public string? AssignedUserId { get; set; }
     public double Quantity { get; set; }
     public required string? Unit { get; set; }

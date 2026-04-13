@@ -4,7 +4,7 @@ using Vela.Domain.Entities;
 using Vela.Domain.Entities.Group;
 using Vela.Domain.Entities.MealPlan;
 using Vela.Domain.Entities.Notification;
-using Vela.Domain.Entities.Recipe;
+using Vela.Domain.Entities.Recipes;
 using Vela.Infrastructure.Identity;
 using Vela.Domain.Entities.ShoppingList;
 
@@ -112,7 +112,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             .OnDelete(DeleteBehavior.Cascade);
         
         modelBuilder.Entity<ShoppingListItem>()
-            .HasOne<MealPlanEntry>()
+            .HasOne(i => i.MealPlanEntry)
             .WithMany()
             .HasForeignKey(i => i.MealPlanEntryId)
             .OnDelete(DeleteBehavior.Cascade);

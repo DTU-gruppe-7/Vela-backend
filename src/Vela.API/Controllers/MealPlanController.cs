@@ -11,19 +11,22 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
     private readonly IMealPlanService _mealPlanService = mealPlanService;
 
     [HttpGet]
-    public async Task<ActionResult<MealPlanDto>> GetMealPlan([FromQuery] Guid groupId)
+    public async Task<ActionResult<MealPlanDto>> GetMealPlan(
+        [FromQuery] Guid groupId,
+        [FromQuery] DateOnly startDate,
+        [FromQuery] DateOnly endDate)
     {
         if (groupId.Equals(Guid.Empty))
         {
-            var currentUserID = GetCurrentUserId();
-            var result = await _mealPlanService.GetMealPlanAsync(currentUserID, null);
+            var currentUserId = GetCurrentUserId();
+            var result = await _mealPlanService.GetAggregatedMealPlanAsync(currentUserId, startDate, endDate);
             if (!result.Success)
                 return NotFound(new { message = result.ErrorMessage });
             return Ok(result.Data);
         }
         else
         {
-            var result = await _mealPlanService.GetMealPlanAsync(null, groupId);
+            var result = await _mealPlanService.GetMealPlanAsync(null, groupId, startDate, endDate);
             if (!result.Success)
                 return NotFound(new { message = result.ErrorMessage });
             return Ok(result.Data);
@@ -79,17 +82,4 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
 
         return Ok(new { message = "Meal plan entry servings updated successfully" });
     }
-    
-    [HttpGet("aggregated")]
-    public async Task<ActionResult<IEnumerable<MealPlanEntryDto>>> GetAggregatedMealPlan()
-    {
-        var currentUserID = GetCurrentUserId();
-        var result = await _mealPlanService.GetAggregatedMealPlanAsync(currentUserID);
-        
-        if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-        
-        return Ok(result.Data);
-    }
-    
 }
