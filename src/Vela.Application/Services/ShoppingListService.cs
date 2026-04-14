@@ -375,7 +375,6 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         await _shoppingListRepository.SaveChangesAsync();
         return Result.Ok();
     }
-<<<<<<< feature/GroupName
     
     public async Task<Result> ClearAllItemsAsync(Guid shoppingListId)
     {
@@ -411,6 +410,4 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
 }
-=======
-}
->>>>>>> develop
+
