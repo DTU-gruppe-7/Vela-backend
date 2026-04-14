@@ -1,4 +1,6 @@
-﻿namespace Vela.Application.DTOs.ShoppingList;
+﻿using Vela.Domain.Enums;
+
+namespace Vela.Application.DTOs.ShoppingList;
 
 public class ShoppingListItemDto
 {
@@ -6,6 +8,7 @@ public class ShoppingListItemDto
     public required string IngredientName { get; set; }
     public string? AssignedUserId { get; set; }
     public string? RecipeName { get; set; }
+    public IngredientCategory  Category { get; set; }
     public double Quantity { get; set; }
     public string? Unit { get; set; }
     public decimal? Price { get; set; }
