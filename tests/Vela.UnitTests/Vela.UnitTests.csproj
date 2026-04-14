@@ -25,4 +25,8 @@
     <ProjectReference Include="..\..\src\Vela.Domain\Vela.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Common\" />
+  </ItemGroup>
+
 </Project>

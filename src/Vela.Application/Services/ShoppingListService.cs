@@ -54,6 +54,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 AssignedUserId = i.AssignedUserId,
                 Quantity = i.Quantity,
                 RecipeName = i.MealPlanEntry?.Recipe?.Name + " (" + i.MealPlanEntry?.Date + ")",
+                Category = i.ItemCategory,
                 Unit = i.Unit,
                 Price = i.Price,
                 Shop = i.Shop,
@@ -85,6 +86,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 IngredientName = i.IngredientName,
                 AssignedUserId = i.AssignedUserId,
                 Quantity = i.Quantity,
+                Category = i.ItemCategory,
                 Unit = i.Unit,
                 Price = i.Price,
                 Shop = i.Shop,
@@ -139,6 +141,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         item.IngredientName = dto.IngredientName;
         item.AssignedUserId = dto.AssignedUserId;
         item.Quantity = dto.Quantity;
+        item.ItemCategory = dto.Category;
         item.Unit = dto.Unit;
         item.Price = dto.Price;
         item.Shop = dto.Shop;
@@ -206,6 +209,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 Id = item.Id,
                 IngredientName = item.IngredientName,
                 AssignedUserId = item.AssignedUserId,
+                Category = item.ItemCategory,
                 Quantity = item.Quantity,
                 Unit = item.Unit,
                 Price = item.Price,
@@ -354,8 +358,12 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
 
         var hasMatchingItems = shoppingList.Items.Any(i => i.MealPlanEntryId == mealPlanEntryId);
         if (!hasMatchingItems)
-            return Result.Fail("No shopping list items found for the meal plan entry");
-
+        {
+            mealPlanEntry.AddedToShoppingList = false;
+            await _shoppingListRepository.SaveChangesAsync();
+            return Result.Ok();
+        }
+        
         await _shoppingListRepository.DeleteItemsByMealPlanEntryIdAsync(mealPlanEntryId);
 
         mealPlanEntry.AddedToShoppingList = false;
