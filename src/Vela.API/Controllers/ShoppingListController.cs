@@ -83,4 +83,26 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
 
         return Ok(result.Data);
     }
+    
+    [HttpDelete("{id}/clear")]
+    public async Task<ActionResult> ClearAll(Guid id)
+    {
+        var result = await _shoppingListService.ClearAllItemsAsync(id);
+        
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}/clearPurchased")]
+    public async Task<ActionResult> ClearPurchased(Guid id)
+    {
+        var result = await _shoppingListService.ClearPurchasedItemsAsync(id);
+        
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return NoContent();
+    }
 }

@@ -127,6 +127,27 @@ public class GroupService(
         var profiles = await _userRepository.GetUserProfilesByIdsAsync(allUserIds);
         return Result<IEnumerable<GroupDto>>.Ok(groupList.Select(g => MapToDto(g, profiles)));
     }
+    
+    public async Task<Result> UpdateGroupNameAsync(Guid groupId, string newName, string callerUserId)
+    {
+        var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
+        if (group == null)
+            return Result.Fail($"Group with ID {groupId} not found");
+        
+        var authResult = _authorizationService.AuthorizeDeleteGroup(group, callerUserId);
+        if (!authResult.Success)
+            return authResult;
+
+        if (string.IsNullOrWhiteSpace(newName))
+            return Result.Fail("Gruppens navn må ikke være tomt");
+        
+        group.Name = newName.Trim();
+        group.UpdatedAt = DateTimeOffset.UtcNow;
+        
+        await _groupRepository.SaveChangesAsync();
+    
+        return Result.Ok();
+    }
 
     public async Task<Result> DeleteGroupAsync(Guid groupId, string callerUserId)
     {

@@ -324,4 +324,38 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         await _shoppingListRepository.SaveChangesAsync();
         return Result.Ok();
     }
+    
+    public async Task<Result> ClearAllItemsAsync(Guid shoppingListId)
+    {
+        var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(shoppingListId);
+    
+        if (shoppingList == null)
+            return Result.Fail("Indkøbslisten blev ikke fundet.");
+
+        if (!shoppingList.Items.Any())
+            return Result.Ok();
+        
+        await _shoppingListRepository.RemoveRangeAsync(shoppingList.Items);
+        await _shoppingListRepository.SaveChangesAsync(); // Eller _shoppingListRepository.SaveChangesAsync()
+
+        return Result.Ok();
+    }
+
+    public async Task<Result> ClearPurchasedItemsAsync(Guid shoppingListId)
+    {
+        var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(shoppingListId);
+    
+        if (shoppingList == null)
+            return Result.Fail("Indkøbslisten blev ikke fundet.");
+        
+        var itemsToRemove = shoppingList.Items.Where(i => i.IsBought).ToList();
+
+        if (!itemsToRemove.Any())
+            return Result.Ok();
+
+        await _shoppingListRepository.RemoveRangeAsync(itemsToRemove);
+        await _shoppingListRepository.SaveChangesAsync();
+
+        return Result.Ok();
+    }
 }

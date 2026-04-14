@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities.ShoppingList;
 using Vela.Infrastructure.Data;
@@ -87,5 +87,10 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         
         if(items.Count > 0)
             _context.Set<ShoppingListItem>().RemoveRange(items);
+    }
+
+    public async Task RemoveRangeAsync(IEnumerable<ShoppingListItem> items)
+    {
+        _context.Set<ShoppingListItem>().RemoveRange(items);
     }
 }

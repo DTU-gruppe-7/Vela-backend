@@ -17,4 +17,5 @@ public interface IGroupService
     Task<Result> ChangeMemberRoleAsync(Guid groupId, string targetUserId, GroupRole newRole, string callerUserId);
     Task<Result> LeaveGroupAsync(Guid groupId, string callerUserId);
     Task<Result> TransferOwnershipAsync(Guid groupId, string newOwnerUserId, string callerUserId);
+    Task<Result> UpdateGroupNameAsync(Guid groupId, string newName, string callerUserId);
 }
