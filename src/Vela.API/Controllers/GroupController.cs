@@ -172,4 +172,16 @@ public class GroupController(
         var result = await _groupInviteService.GetInvitesByUserIdAsync(userId);
         return Ok(result.Data);
     }
+    
+    [HttpPatch("{groupId}")]
+    public async Task<IActionResult> UpdateName(Guid groupId, [FromBody] UpdateGroupNameRequest request)
+    {
+        var callerUserId = GetCurrentUserId(); 
+        var result = await _groupService.UpdateGroupNameAsync(groupId, request.Name, callerUserId);
+
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+        
+        return Ok(new { message = "Navnet er opdateret" });
+    }
 }

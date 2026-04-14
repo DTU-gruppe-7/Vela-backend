@@ -86,6 +86,31 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
 
         return Ok(result.Data);
     }
+<<<<<<< feature/GroupName
+    
+    [HttpDelete("{id}/clear")]
+    public async Task<ActionResult> ClearAll(Guid id)
+    {
+        var result = await _shoppingListService.ClearAllItemsAsync(id);
+        
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return NoContent();
+    }
+
+    [HttpDelete("{id}/clear-purchased")]
+    public async Task<ActionResult> ClearPurchased(Guid id)
+    {
+        var result = await _shoppingListService.ClearPurchasedItemsAsync(id);
+        
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return NoContent();
+    }
+}
+=======
 
     [HttpDelete("{id}/from-mealplan/{mealPlanId}")]
     public async Task<ActionResult> DeleteMealPlanEntry(
@@ -105,3 +130,4 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
             
     }
 }
+>>>>>>> develop

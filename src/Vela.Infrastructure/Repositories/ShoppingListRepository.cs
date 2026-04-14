@@ -8,7 +8,7 @@ namespace Vela.Infrastructure.Repositories;
 
 public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingList>(context), IShoppingListRepository
 {
-    
+
     /// <summary>
     /// Get shopping list with all items and ingredients
     /// Uses eager loading to avoid N+1 query problem
@@ -30,8 +30,11 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         return await _dbSet
             .Include(sl => sl.Items)!
+<<<<<<< feature/GroupName
+=======
             .ThenInclude(i => i.MealPlanEntry)
             .ThenInclude(mpe => mpe.Recipe)
+>>>>>>> develop
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.UserId == userId);
     }
@@ -44,12 +47,15 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         return await _dbSet
             .Include(sl => sl.Items)!
+<<<<<<< feature/GroupName
+=======
             .ThenInclude(i => i.MealPlanEntry)
             .ThenInclude(mpe => mpe.Recipe)
+>>>>>>> develop
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.GroupId == groupId);
     }
-    
+
     public async Task<ShoppingList?> GetByIdWithItemsReadOnlyAsync(Guid id)
     {
         return await _dbSet
@@ -64,7 +70,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
             .Include(sl => sl.MealPlanEntry)
             .FirstOrDefaultAsync(i => i.Id == id);
     }
-    
+
     public async Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item)
     {
         await _context.Set<ShoppingListItem>().AddAsync(item);
@@ -92,8 +98,14 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         var items = await _context.Set<ShoppingListItem>()
             .Where(sl => sl.MealPlanEntryId == mealPlanEntryId)
             .ToListAsync();
-        
-        if(items.Count > 0)
+
+        if (items.Count > 0)
             _context.Set<ShoppingListItem>().RemoveRange(items);
     }
+
+    public async Task RemoveRangeAsync(IEnumerable<ShoppingListItem> items)
+    {
+        _context.Set<ShoppingListItem>().RemoveRange(items);
+    }
+
 }
