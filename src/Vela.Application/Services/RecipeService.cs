@@ -1,7 +1,7 @@
 ﻿using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
-using Vela.Domain.Entities.Recipe;
+using Vela.Domain.Entities.Recipes;
 
 namespace Vela.Application.Services;
 

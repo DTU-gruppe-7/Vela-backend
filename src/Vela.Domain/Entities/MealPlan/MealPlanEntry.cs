@@ -1,4 +1,4 @@
-﻿using Vela.Domain.Entities.Recipe;
+﻿using Vela.Domain.Entities.Recipes;
 
 namespace Vela.Domain.Entities.MealPlan;
 
@@ -10,7 +10,7 @@ public class MealPlanEntry
     public required MealPlan MealPlan { get; set; }
     
     public Guid RecipeId { get; set; }
-    public required Recipe.Recipe Recipe { get; set; }
+    public required Recipe Recipe { get; set; }
     
     public required DateOnly Date { get; set; } 
     public required string MealType { get; set; }

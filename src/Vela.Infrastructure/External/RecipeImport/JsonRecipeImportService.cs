@@ -5,7 +5,7 @@ using Vela.Application.DTOs;
 using Vela.Application.Interfaces.External;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Validation;
-using Vela.Domain.Entities.Recipe;
+using Vela.Domain.Entities.Recipes;
 using Vela.Domain.Enums;
 
 namespace Vela.Infrastructure.External.RecipeImport;

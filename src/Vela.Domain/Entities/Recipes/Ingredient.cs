@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Vela.Domain.Enums;
 
-namespace Vela.Domain.Entities.Recipe;
+namespace Vela.Domain.Entities.Recipes;
 
 public class Ingredient
 {

@@ -1,5 +1,5 @@
 ﻿using Vela.Domain.Enums;
-using Vela.Domain.Entities.Recipe;
+using Vela.Domain.Entities.Recipes;
 
 namespace Vela.Domain.Entities;
 
@@ -13,6 +13,6 @@ public class Like
     public DateTimeOffset SwipedAt { get; set; } = DateTimeOffset.UtcNow;
 
     // Navigation
-    public virtual Recipe.Recipe Recipe { get; set; }
+    public virtual Recipe Recipe { get; set; }
 
 }

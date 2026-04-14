@@ -11,5 +11,5 @@ public interface IMealPlanRepository : IRepository<MealPlan>
     Task RemoveEntryAsync(Guid entryId);
     Task<MealPlanEntry?> GetEntryAsync(Guid entryId);
     Task<MealPlan?> GetByIdWithEntriesByDateRangeAsync(Guid id, DateOnly startDate, DateOnly endDate);
-    Task<IEnumerable<MealPlan>> GetByGroupIdsWithEntriesAsync(IEnumerable<Guid> groupIds); 
+    Task<IEnumerable<MealPlan>> GetAllGroupMealPlans(IEnumerable<Guid> groupIds); 
 }

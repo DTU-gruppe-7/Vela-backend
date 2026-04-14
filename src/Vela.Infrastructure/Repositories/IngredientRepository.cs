@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Vela.Domain.Entities.Recipe;
+using Vela.Domain.Entities.Recipes;
 using Vela.Infrastructure.Data;
 using Vela.Application.Interfaces.Repository;
 

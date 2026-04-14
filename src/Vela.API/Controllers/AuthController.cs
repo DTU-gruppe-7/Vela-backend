@@ -18,7 +18,7 @@ public class AuthController(IAuthService authService, IShoppingListService shopp
          var result = await _authService.RegisterAsync(registerRequestDto);
          if (!result.Success)
          {
-             return BadRequest(result.ErrorMessage);
+             return BadRequest(new { message = result.ErrorMessage });
          }
 
          var userId = result.Data?.UserId;

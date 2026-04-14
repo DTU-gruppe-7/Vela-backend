@@ -24,6 +24,15 @@ public class AuthService(UserManager<AppUser> userManager, IConfiguration config
         if (existingUser != null)
             return Result<AuthResponseDto>.Fail("A user with this email does already exists");
 
+        if (requestDto.DateOfBirth.HasValue)
+        {
+            var dob = requestDto.DateOfBirth.Value;
+            if (dob >= DateOnly.FromDateTime(DateTime.UtcNow))
+                return Result<AuthResponseDto>.Fail("Date of birth cannot be in the future.");
+            if (dob < new DateOnly(1900, 1, 1))
+                return Result<AuthResponseDto>.Fail("Date of birth cannot be before 1900-01-01.");
+        }
+
         var newUser = new AppUser
         {
             UserName = requestDto.Email,
