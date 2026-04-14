@@ -30,11 +30,8 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         return await _dbSet
             .Include(sl => sl.Items)!
-<<<<<<< feature/GroupName
-=======
             .ThenInclude(i => i.MealPlanEntry)
             .ThenInclude(mpe => mpe.Recipe)
->>>>>>> develop
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.UserId == userId);
     }
@@ -47,11 +44,8 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         return await _dbSet
             .Include(sl => sl.Items)!
-<<<<<<< feature/GroupName
-=======
             .ThenInclude(i => i.MealPlanEntry)
             .ThenInclude(mpe => mpe.Recipe)
->>>>>>> develop
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.GroupId == groupId);
     }

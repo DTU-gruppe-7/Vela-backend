@@ -86,7 +86,6 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
 
         return Ok(result.Data);
     }
-<<<<<<< feature/GroupName
     
     [HttpDelete("{id}/clear")]
     public async Task<ActionResult> ClearAll(Guid id)
@@ -109,8 +108,7 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
 
         return NoContent();
     }
-}
-=======
+
 
     [HttpDelete("{id}/from-mealplan/{mealPlanId}")]
     public async Task<ActionResult> DeleteMealPlanEntry(
@@ -130,4 +128,3 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
             
     }
 }
->>>>>>> develop
