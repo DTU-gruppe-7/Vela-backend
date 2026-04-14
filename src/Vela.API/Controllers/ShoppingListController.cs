@@ -95,7 +95,7 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         return NoContent();
     }
 
-    [HttpDelete("{id}/clearPurchased")]
+    [HttpDelete("{id}/clear-purchased")]
     public async Task<ActionResult> ClearPurchased(Guid id)
     {
         var result = await _shoppingListService.ClearPurchasedItemsAsync(id);

@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Service;
 using Vela.Infrastructure.Identity;
-using System.Threading.Tasks;
-using System;
 
 namespace Vela.API.Controllers;
 
@@ -183,11 +181,6 @@ public class GroupController(
 
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
-
-        var updatedGroupResult = await _groupService.GetGroupAsync(groupId, callerUserId);
-        
-        if (!updatedGroupResult.Success)
-            return BadRequest(new { message = updatedGroupResult.ErrorMessage });
         
         return Ok(new { message = "Navnet er opdateret" });
     }

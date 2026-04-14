@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
 using Vela.Domain.Entities.ShoppingList;
 using Vela.Infrastructure.Data;
@@ -7,7 +7,7 @@ namespace Vela.Infrastructure.Repositories;
 
 public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingList>(context), IShoppingListRepository
 {
-    
+
     /// <summary>
     /// Get shopping list with all items and ingredients
     /// Uses eager loading to avoid N+1 query problem
@@ -26,7 +26,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     public async Task<ShoppingList?> GetByUserIdAsync(string userId)
     {
         return await _dbSet
-            .Include(sl => sl.Items)! 
+            .Include(sl => sl.Items)!
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.UserId == userId);
     }
@@ -38,11 +38,11 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     public async Task<ShoppingList?> GetByGroupIdAsync(Guid groupId)
     {
         return await _dbSet
-            .Include(sl => sl.Items)! 
+            .Include(sl => sl.Items)!
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.GroupId == groupId);
     }
-    
+
     public async Task<ShoppingList?> GetByIdWithItemsReadOnlyAsync(Guid id)
     {
         return await _dbSet
@@ -56,7 +56,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         return await _context.Set<ShoppingListItem>()
             .FirstOrDefaultAsync(i => i.Id == id);
     }
-    
+
     public async Task<ShoppingListItem?> AddItemAsync(ShoppingListItem item)
     {
         await _context.Set<ShoppingListItem>().AddAsync(item);
@@ -84,8 +84,8 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         var items = await _context.Set<ShoppingListItem>()
             .Where(sl => sl.MealPlanEntryId == mealPlanEntryId)
             .ToListAsync();
-        
-        if(items.Count > 0)
+
+        if (items.Count > 0)
             _context.Set<ShoppingListItem>().RemoveRange(items);
     }
 
@@ -93,4 +93,5 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         _context.Set<ShoppingListItem>().RemoveRange(items);
     }
+
 }

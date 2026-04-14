@@ -336,7 +336,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             return Result.Ok();
         
         await _shoppingListRepository.RemoveRangeAsync(shoppingList.Items);
-        await _shoppingListRepository.SaveChangesAsync(); // Eller _shoppingListRepository.SaveChangesAsync()
+        await _shoppingListRepository.SaveChangesAsync(); 
 
         return Result.Ok();
     }

@@ -134,7 +134,7 @@ public class GroupService(
         if (group == null)
             return Result.Fail($"Group with ID {groupId} not found");
         
-        var authResult = _authorizationService.AuthorizeDeleteGroup(group, callerUserId);
+        var authResult = _authorizationService.AuthorizeMembership(group, callerUserId);
         if (!authResult.Success)
             return authResult;
 

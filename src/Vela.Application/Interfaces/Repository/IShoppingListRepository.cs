@@ -1,4 +1,4 @@
-﻿﻿using Vela.Application.DTOs;
+﻿using Vela.Application.DTOs;
 using Vela.Domain.Entities.ShoppingList;
 
 namespace Vela.Application.Interfaces.Repository;
