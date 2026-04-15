@@ -76,7 +76,7 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
     [HttpPut("{mealPlanId}/entries/{entryId}")]
     public async Task<IActionResult> UpdateMealPlanEntryServings(Guid mealPlanId, Guid entryId, [FromBody] UpdateMealPlanEntryServingsRequest request)
     {
-        var result = await _mealPlanService.UpdateMealPlanEntryServingsAsync(mealPlanId, entryId, request.Servings);
+        var result = await _mealPlanService.UpdateMealPlanEntryServingsAsync(mealPlanId, entryId, request.Servings, request.Date);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 

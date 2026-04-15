@@ -144,13 +144,21 @@ public class MealPlanService(
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int servings)
+    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int? servings, DateOnly? newdate = null)
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
             return Result.Fail($"Meal plan entry with ID {entryId} not found");
 
-        entry.Servings = servings;
+        if (servings.HasValue)
+        {
+            entry.Servings = servings.Value;
+        }
+
+        if (newdate.HasValue)
+        {
+            entry.Date = newdate.Value;
+        }
 
         await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
