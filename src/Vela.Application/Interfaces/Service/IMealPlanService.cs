@@ -12,7 +12,7 @@ public interface IMealPlanService
     Task<Result> DeleteMealPlanAsync(Guid mealPlanId);
     Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request);
     Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId);
-    Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int servings);
+    Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int? servings, DateOnly? newDate);
     Task<Result<MealPlanDto>> GetMealPlanWithEntriesAsync(Guid mealPlanId);
     Task<Result<MealPlanDto>> GetAggregatedMealPlanAsync(string userId, DateOnly startDate, DateOnly endDate);
 }
