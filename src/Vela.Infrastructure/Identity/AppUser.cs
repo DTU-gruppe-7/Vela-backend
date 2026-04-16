@@ -14,9 +14,8 @@ public class AppUser : IdentityUser
     public DateOnly? DateOfBirth { get; set; }
     
     // App-specifikke indstillinger
-    public int DefaultPortions { get; set; } = 2; // Standard antal personer de handler ind til
+    public int DefaultPortions { get; set; } = 1; // Standard antal personer de handler ind til
     public string? PushNotificationToken { get; set; } // Til fremtidige Tinder-matches
-
     // Kostpræferencer
     public bool AvoidGluten { get; set; }
     public bool AvoidLactose { get; set; }
