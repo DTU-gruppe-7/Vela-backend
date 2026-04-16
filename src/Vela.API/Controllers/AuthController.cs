@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Vela.Application.DTOs.Auth;
 using Vela.Application.Interfaces.Service;
 
@@ -72,12 +71,7 @@ public class AuthController(IAuthService authService, IShoppingListService shopp
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            return Unauthorized();
-        }
+        var userId = GetCurrentUserId();
         
         var result = await _authService.LogoutAsync(userId);
 
@@ -87,5 +81,31 @@ public class AuthController(IAuthService authService, IShoppingListService shopp
         }
         
         return NoContent();
+    }
+
+    [Authorize]
+    [HttpGet("preferences")]
+    public async Task<IActionResult> GetDietaryPreferences()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _authService.GetDietaryPreferencesAsync(userId);
+
+        if (!result.Success)
+            return NotFound(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
+    }
+
+    [Authorize]
+    [HttpPatch("preferences")]
+    public async Task<IActionResult> UpdateDietaryPreferences([FromBody] UpdateUserDietaryPreferencesRequestDto requestDto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _authService.UpdateDietaryPreferencesAsync(userId, requestDto);
+
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(result.Data);
     }
 } 

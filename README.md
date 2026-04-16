@@ -164,3 +164,4 @@ dotnet ef migrations add InitialCreate --project src/Vela.Infrastructure --start
 dotnet ef database update --project src/Vela.Infrastructure --startup-project src/Vela.API
 ```
 Remember to load the recipes again
+You can still override preferences per-request using the `exclude` parameter.
