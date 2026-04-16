@@ -33,8 +33,9 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
             {
                 return result.ErrorType switch
                 {
+                    ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                     ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                    _ => NotFound(new { message = result.ErrorMessage })
+                    _ => BadRequest(new { message = result.ErrorMessage })
                 };
             }
             return Ok(result.Data);
@@ -50,8 +51,9 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         {
             return updateResult.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = updateResult.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = updateResult.ErrorMessage }),
-                _ => NotFound(new { message = updateResult.ErrorMessage })
+                _ => BadRequest(new { message = updateResult.ErrorMessage })
             };
         }
         return Ok(updateResult);
@@ -66,8 +68,9 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return Ok(new { message = "Meal plan deleted successfully" });
@@ -82,8 +85,9 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return CreatedAtAction(nameof(GetMealPlan), new { id = mealPlanId }, result.Data);
@@ -98,6 +102,7 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
                 _ => BadRequest(new { message = result.ErrorMessage })
             };
@@ -114,6 +119,7 @@ public class MealPlanController(IMealPlanService mealPlanService) : BaseApiContr
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
                 _ => BadRequest(new { message = result.ErrorMessage })
             };

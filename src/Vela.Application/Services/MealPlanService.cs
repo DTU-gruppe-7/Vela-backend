@@ -45,14 +45,14 @@ public class MealPlanService(
         {
             mealPlan = await _mealPlanRepository.GetByUserIdAsync(userId);
             if (mealPlan == null)
-                return Result<MealPlanDto>.Fail($"Meal plan with userID {userId} not found");
+                return Result<MealPlanDto>.Fail($"Meal plan with userID {userId} not found", ResultErrorType.NotFound);
         }
         else
         {
             Guid foundgroupId = groupId ?? Guid.Empty;
             mealPlan = await _mealPlanRepository.GetByGroupIdAsync(foundgroupId);
             if (mealPlan == null)
-                return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found");
+                return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found", ResultErrorType.NotFound);
 
             var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
             if (!authResult.Success)
@@ -92,7 +92,7 @@ public class MealPlanService(
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
 
         var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
         if (!authResult.Success)
@@ -110,7 +110,7 @@ public class MealPlanService(
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
 
         var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
         if (!authResult.Success)
@@ -125,7 +125,7 @@ public class MealPlanService(
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result<MealPlanEntryDto>.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result<MealPlanEntryDto>.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
 
         var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
         if (!authResult.Success)
@@ -133,7 +133,7 @@ public class MealPlanService(
 
         var recipe = await _recipeRepository.GetByUuidAsync(request.RecipeId);
         if (recipe == null)
-            return Result<MealPlanEntryDto>.Fail($"Recipe with ID {request.RecipeId} not found");
+            return Result<MealPlanEntryDto>.Fail($"Recipe with ID {request.RecipeId} not found", ResultErrorType.NotFound);
 
         var entry = new MealPlanEntry
         {
@@ -159,14 +159,14 @@ public class MealPlanService(
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
-            return Result.Fail($"Meal plan entry with ID {entryId} not found");
+            return Result.Fail($"Meal plan entry with ID {entryId} not found", ResultErrorType.NotFound);
 
         if (entry.MealPlanId != mealPlanId)
             return Result.Fail("Entry does not belong to this meal plan");
 
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
 
         var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
         if (!authResult.Success)
@@ -183,11 +183,11 @@ public class MealPlanService(
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
-            return Result.Fail($"Meal plan entry with ID {entryId} not found");
+            return Result.Fail($"Meal plan entry with ID {entryId} not found", ResultErrorType.NotFound);
 
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
 
         var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
         if (!authResult.Success)
