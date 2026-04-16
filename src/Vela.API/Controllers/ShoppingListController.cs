@@ -16,8 +16,8 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     {
         if (groupId.Equals(Guid.Empty))
         {
-            var curentUserId = GetCurrentUserId();
-            var result = await _shoppingListService.GetShoppingListAsync(curentUserId, null);
+            var callerUserId = GetCurrentUserId();
+            var result = await _shoppingListService.GetShoppingListAsync(callerUserId, null, callerUserId);
             if (!result.Success)
                 return NotFound(new { message = result.ErrorMessage });
             return Ok(result.Data);

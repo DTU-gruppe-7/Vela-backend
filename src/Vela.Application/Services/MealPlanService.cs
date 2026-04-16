@@ -4,7 +4,6 @@ using Vela.Application.DTOs.MealPlan;
 using Vela.Application.DTOs;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
-using Vela.Domain.Entities.Group;
 using Vela.Domain.Entities.MealPlan;
 using Vela.Domain.Entities.Recipes;
 
@@ -179,7 +178,7 @@ public class MealPlanService(
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int? servings, DateOnly? newdate, string callerUserId)
+    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int? servings, DateOnly? newDate, string callerUserId)
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
@@ -198,9 +197,9 @@ public class MealPlanService(
             entry.Servings = servings.Value;
         }
 
-        if (newdate.HasValue)
+        if (newDate.HasValue)
         {
-            entry.Date = newdate.Value;
+            entry.Date = newDate.Value;
         }
 
         await _mealPlanRepository.SaveChangesAsync();

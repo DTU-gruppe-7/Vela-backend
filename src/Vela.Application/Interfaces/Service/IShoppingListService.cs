@@ -5,7 +5,7 @@ namespace Vela.Application.Interfaces.Service;
 
 public interface IShoppingListService
 {
-    Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string? callerUserId = null);
+    Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string callerUserId);
     Task<Result<ShoppingListDto?>> GetShoppingListById(Guid id);
     Task<Result<ShoppingListDto>> CreateShoppingListAsync(string? userId, Guid? groupId, string name);
     Task<Result<ShoppingListItemDto>> UpdateShoppingListItem(Guid itemId, ShoppingListItemDto dto, string callerUserId);

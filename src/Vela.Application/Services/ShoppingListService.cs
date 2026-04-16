@@ -4,7 +4,6 @@ using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Domain.Entities.ShoppingList;
 using Vela.Domain.Enums;
-using Vela.Domain.Entities.Group;
 
 namespace Vela.Application.Services;
 
@@ -26,7 +25,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return _groupAuthorizationService.AuthorizeMembership(group, callerUserId);
     }
     
-    public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string? callerUserId = null)
+    public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string callerUserId)
     {
         var hasUserId = !string.IsNullOrWhiteSpace(userId);
         var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
@@ -49,12 +48,9 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             if (shoppingList == null)
                 return Result<ShoppingListDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
 
-            if (callerUserId != null)
-            {
-                var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
-                if (!authResult.Success)
-                    return Result<ShoppingListDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
-            }
+            var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+            if (!authResult.Success)
+                return Result<ShoppingListDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         }
 
         return Result<ShoppingListDto>.Ok(new ShoppingListDto
