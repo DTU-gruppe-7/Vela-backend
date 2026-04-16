@@ -8,18 +8,28 @@ using Vela.Domain.Enums;
 namespace Vela.Application.Services;
 
 public class ShoppingListService(IShoppingListRepository shoppingListRepository,
-    IIngredientRepository ingredientRepository, IMealPlanRepository mealPlanRepository) : IShoppingListService
+    IIngredientRepository ingredientRepository, IMealPlanRepository mealPlanRepository,
+    IGroupRepository groupRepository, IGroupAuthorizationService groupAuthorizationService) : IShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly IIngredientRepository _ingredientRepository = ingredientRepository;
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
-    
-    public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId,  Guid? groupId)
+    private readonly IGroupRepository _groupRepository = groupRepository;
+    private readonly IGroupAuthorizationService _groupAuthorizationService = groupAuthorizationService;
+
+    private async Task<Result> AuthorizeShoppingListAccessAsync(ShoppingList shoppingList, string callerUserId)
     {
-        
+        if (shoppingList.GroupId == null) return Result.Ok();
+        var group = await _groupRepository.GetGroupWithMembersAsync(shoppingList.GroupId.Value);
+        if (group == null) return Result.Fail("Group not found", ResultErrorType.NotFound);
+        return _groupAuthorizationService.AuthorizeMembership(group, callerUserId);
+    }
+    
+    public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string callerUserId)
+    {
         var hasUserId = !string.IsNullOrWhiteSpace(userId);
         var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
-        
+
         if (hasUserId == hasGroupId)
             return Result<ShoppingListDto>.Fail("Shopping list must belong to either a user or a group. Not both or none");
 
@@ -29,14 +39,18 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         {
             shoppingList = await _shoppingListRepository.GetByUserIdAsync(userId);
             if (shoppingList == null)
-                return Result<ShoppingListDto>.Fail("Shopping list not found");
+                return Result<ShoppingListDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
         }
         else
         {
             Guid foundGroupId = groupId ?? Guid.Empty;
             shoppingList = await _shoppingListRepository.GetByGroupIdAsync(foundGroupId);
             if (shoppingList == null)
-                return Result<ShoppingListDto>.Fail("Shopping list not found");
+                return Result<ShoppingListDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
+
+            var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+            if (!authResult.Success)
+                return Result<ShoppingListDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         }
 
         return Result<ShoppingListDto>.Ok(new ShoppingListDto
@@ -70,7 +84,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
         
         if (shoppingList == null)
-            return Result<ShoppingListDto?>.Fail("ShoppingList not found");
+            return Result<ShoppingListDto?>.Fail("ShoppingList not found", ResultErrorType.NotFound);
 
         var dto = new ShoppingListDto
         {
@@ -132,11 +146,19 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         });
     }
 
-    public async Task<Result<ShoppingListItemDto>> UpdateShoppingListItem(Guid itemId, ShoppingListItemDto dto )
+    public async Task<Result<ShoppingListItemDto>> UpdateShoppingListItem(Guid itemId, ShoppingListItemDto dto, string callerUserId)
     {
         var item = await _shoppingListRepository.GetItemByIdAsync(itemId);
         if (item == null)
-            return Result<ShoppingListItemDto>.Fail("Item not found");
+            return Result<ShoppingListItemDto>.Fail("Item not found", ResultErrorType.NotFound);
+
+        var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(item.ShoppingListId);
+        if (shoppingList == null)
+            return Result<ShoppingListItemDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result<ShoppingListItemDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         
         item.IngredientName = dto.IngredientName;
         item.AssignedUserId = dto.AssignedUserId;
@@ -152,14 +174,18 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result<ShoppingListItemDto>.Ok(dto);
     } 
     
-    public async Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, AddShoppingListItemDto dto)
+    public async Task<Result<ShoppingListItemDto>> AddItemAsync(Guid shoppingListId, AddShoppingListItemDto dto, string callerUserId)
     {
         if (dto.Quantity <= 0)
             return Result<ShoppingListItemDto>.Fail("Quantity must be greater than zero");
-        
+
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(shoppingListId);
         if (shoppingList == null)
-            return Result<ShoppingListItemDto>.Fail("Shopping list not found");
+            return Result<ShoppingListItemDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result<ShoppingListItemDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         
         ShoppingListItem item;
 
@@ -167,7 +193,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         {
             var ingredient = await _ingredientRepository.GetByUuidAsync(dto.IngredientId);
             if (ingredient == null)
-                return Result<ShoppingListItemDto>.Fail("Ingredient not found");
+                return Result<ShoppingListItemDto>.Fail("Ingredient not found", ResultErrorType.NotFound);
             
             var (normalizedQty, normalizedUnit) = UnitConverter.Normalize(dto.Quantity, dto.Unit, ingredient.Unit, ingredient.Category);
             
@@ -224,7 +250,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     {
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
         if (shoppingList == null)
-            return Result.Fail("Shopping list not found");
+            return Result.Fail("Shopping list not found", ResultErrorType.NotFound);
 
         await _shoppingListRepository.DeleteAsync(shoppingList);
         await _shoppingListRepository.SaveChangesAsync();
@@ -232,11 +258,21 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteItemAsync(Guid itemId)
+    public async Task<Result> DeleteItemAsync(Guid itemId, string callerUserId)
     {
-        var item = await _shoppingListRepository.DeleteItemAsync(itemId);
+        var item = await _shoppingListRepository.GetItemByIdAsync(itemId);
         if (item == null)
-            return Result.Fail("Item not found");
+            return Result.Fail("Item not found", ResultErrorType.NotFound);
+
+        var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(item.ShoppingListId);
+        if (shoppingList == null)
+            return Result.Fail("Shopping list not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
+
+        await _shoppingListRepository.DeleteItemAsync(itemId);
         await _shoppingListRepository.SaveChangesAsync();
 
         return Result.Ok();
@@ -253,11 +289,11 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     /// <param name="endDate">End date of the range (inclusive)</param>
     /// <returns>The updated shopping list with new items added</returns>
     public async Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(
-        Guid mealPlanId, DateOnly startDate, DateOnly endDate, IReadOnlyCollection<Guid>? excludedEntryIds)
+        Guid mealPlanId, DateOnly startDate, DateOnly endDate, IReadOnlyCollection<Guid>? excludedEntryIds, string callerUserId)
     {
         var mealPlan = await _mealPlanRepository.GetByIdWithEntriesByDateRangeAsync(mealPlanId, startDate, endDate);
         if (mealPlan == null)
-            return Result<ShoppingListDto?>.Fail("Meal plan not found");
+            return Result<ShoppingListDto?>.Fail("Meal plan not found", ResultErrorType.NotFound);
 
         ShoppingList shoppingList;
 
@@ -265,17 +301,21 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         {
             var groupShoppingList = await _shoppingListRepository.GetByGroupIdAsync(mealPlan.GroupId.Value);
             if (groupShoppingList == null)
-                return Result<ShoppingListDto?>.Fail("Group shopping list not found");
+                return Result<ShoppingListDto?>.Fail("Group shopping list not found", ResultErrorType.NotFound);
             shoppingList = groupShoppingList;
         }
         else
         {
             var userShoppingList = await _shoppingListRepository.GetByUserIdAsync(mealPlan.UserId);
             if (userShoppingList == null)
-                return Result<ShoppingListDto?>.Fail("User shopping list not found");
-            
+                return Result<ShoppingListDto?>.Fail("User shopping list not found", ResultErrorType.NotFound);
+
             shoppingList = userShoppingList;
         }
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result<ShoppingListDto?>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         var excludedIds = excludedEntryIds is { Count: > 0 }
             ? excludedEntryIds.ToHashSet()
@@ -344,17 +384,21 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return await GetShoppingListById(shoppingList.Id);
     }
 
-    public async Task<Result> DeleteMealPlanEntryAsync(Guid id, Guid mealPlanEntryId)
+    public async Task<Result> DeleteMealPlanEntryAsync(Guid id, Guid mealPlanEntryId, string callerUserId)
     {
         if (id == Guid.Empty)
             return Result.Fail("Shopping list ID is required");
         var mealPlanEntry = await _mealPlanRepository.GetEntryAsync(mealPlanEntryId);
         if (mealPlanEntry == null)
-            return Result.Fail("Meal plan entry not found");
+            return Result.Fail("Meal plan entry not found", ResultErrorType.NotFound);
 
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(id);
         if (shoppingList == null)
-            return Result.Fail("Shopping list not found");
+            return Result.Fail("Shopping list not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         var hasMatchingItems = shoppingList.Items.Any(i => i.MealPlanEntryId == mealPlanEntryId);
         if (!hasMatchingItems)
@@ -375,7 +419,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     public async Task<Result> AssignItemToUserAsync(Guid itemId, string targetUserId)
     {
         var item = await _shoppingListRepository.GetItemByIdAsync(itemId);
-        if (item == null) return Result.Fail("Item not found");
+        if (item == null) return Result.Fail("Item not found", ResultErrorType.NotFound);
 
         item.AssignedUserId = targetUserId;
         item.UpdatedAt = DateTimeOffset.UtcNow;
@@ -384,12 +428,16 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
     
-    public async Task<Result> ClearAllItemsAsync(Guid shoppingListId)
+    public async Task<Result> ClearAllItemsAsync(Guid shoppingListId, string callerUserId)
     {
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(shoppingListId);
-    
+
         if (shoppingList == null)
-            return Result.Fail("Indkøbslisten blev ikke fundet.");
+            return Result.Fail("Indkøbslisten blev ikke fundet.", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         if (!shoppingList.Items.Any())
             return Result.Ok();
@@ -400,12 +448,16 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
 
-    public async Task<Result> ClearPurchasedItemsAsync(Guid shoppingListId)
+    public async Task<Result> ClearPurchasedItemsAsync(Guid shoppingListId, string callerUserId)
     {
         var shoppingList = await _shoppingListRepository.GetByIdWithItemsAsync(shoppingListId);
-    
+
         if (shoppingList == null)
-            return Result.Fail("Indkøbslisten blev ikke fundet.");
+            return Result.Fail("Indkøbslisten blev ikke fundet.", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeShoppingListAccessAsync(shoppingList, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         
         var itemsToRemove = shoppingList.Items.Where(i => i.IsBought).ToList();
 
