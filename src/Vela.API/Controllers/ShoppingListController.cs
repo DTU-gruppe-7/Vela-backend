@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Vela.Application.Common;
 using Vela.Application.DTOs.ShoppingList;
 using Vela.Application.Interfaces.Service;
 
@@ -23,9 +24,16 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         }
         else
         {
-            var result = await _shoppingListService.GetShoppingListAsync(null, groupId);
+            var callerUserId = GetCurrentUserId();
+            var result = await _shoppingListService.GetShoppingListAsync(null, groupId, callerUserId);
             if (!result.Success)
-                return NotFound(new { message = result.ErrorMessage });
+            {
+                return result.ErrorType switch
+                {
+                    ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                    _ => NotFound(new { message = result.ErrorMessage })
+                };
+            }
             return Ok(result.Data);
         }
 
@@ -34,32 +42,48 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     [HttpPost("{id}/items")]
     public async Task<ActionResult<ShoppingListItemDto>> AddItem(Guid id, [FromBody] AddShoppingListItemDto dto)
     {
-        var result = await _shoppingListService.AddItemAsync(id, dto);
-
+        var callerUserId = GetCurrentUserId();
+        var result = await _shoppingListService.AddItemAsync(id, dto, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => NotFound(new { message = result.ErrorMessage })
+            };
+        }
         return Ok(result.Data);
     }
 
-    
     [HttpDelete("{id}/items/{itemId}")]
     public async Task<ActionResult> DeleteItem(Guid id, Guid itemId)
     {
-        var result = await _shoppingListService.DeleteItemAsync(itemId);
+        var callerUserId = GetCurrentUserId();
+        var result = await _shoppingListService.DeleteItemAsync(itemId, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => NotFound(new { message = result.ErrorMessage })
+            };
+        }
         return NoContent();
     }
 
     [HttpPut("{id}/items/{itemId}")]
     public async Task<ActionResult<ShoppingListItemDto>> UpdateShoppingListItem(Guid id, Guid itemId, [FromBody] ShoppingListItemDto dto)
     {
-        var result = await _shoppingListService.UpdateShoppingListItem(itemId, dto);
+        var callerUserId = GetCurrentUserId();
+        var result = await _shoppingListService.UpdateShoppingListItem(itemId, dto, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-        
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => NotFound(new { message = result.ErrorMessage })
+            };
+        }
         return Ok(result.Data);
     }
     
@@ -78,11 +102,18 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         
         var excludedEntryIds = requestDto?.ExcludedMealPlanEntryIds ?? new List<Guid>();
 
+        var callerUserId = GetCurrentUserId();
         var result = await _shoppingListService.GenerateFromMealPlanAsync(
-            mealPlanId, startDate, endDate, excludedEntryIds);
+            mealPlanId, startDate, endDate, excludedEntryIds, callerUserId);
 
         if (!result.Success)
-            return BadRequest(result.ErrorMessage);
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => BadRequest(result.ErrorMessage)
+            };
+        }
 
         return Ok(result.Data);
     }
@@ -90,22 +121,32 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
     [HttpDelete("{id}/clear")]
     public async Task<ActionResult> ClearAll(Guid id)
     {
-        var result = await _shoppingListService.ClearAllItemsAsync(id);
-        
+        var callerUserId = GetCurrentUserId();
+        var result = await _shoppingListService.ClearAllItemsAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => NotFound(new { message = result.ErrorMessage })
+            };
+        }
         return NoContent();
     }
 
     [HttpDelete("{id}/clear-purchased")]
     public async Task<ActionResult> ClearPurchased(Guid id)
     {
-        var result = await _shoppingListService.ClearPurchasedItemsAsync(id);
-        
+        var callerUserId = GetCurrentUserId();
+        var result = await _shoppingListService.ClearPurchasedItemsAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
-
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => NotFound(new { message = result.ErrorMessage })
+            };
+        }
         return NoContent();
     }
 
@@ -119,10 +160,16 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         if (mealPlanEntryId == Guid.Empty)
             return BadRequest(new { message = "There must be a meal plan entry ID provided" });
         
-        var result = await _shoppingListService.DeleteMealPlanEntryAsync(id, mealPlanEntryId);
-
+        var callerUserId = GetCurrentUserId();
+        var result = await _shoppingListService.DeleteMealPlanEntryAsync(id, mealPlanEntryId, callerUserId);
         if (!result.Success)
-            return BadRequest(result.ErrorMessage);
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => BadRequest(result.ErrorMessage)
+            };
+        }
 
         return Ok(result);
             
