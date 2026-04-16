@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Vela.Application.Common;
 using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Service;
 using Vela.Infrastructure.Identity;
@@ -34,7 +35,14 @@ public class GroupController(
         var callerUserId = GetCurrentUserId();
         var result = await _groupService.GetGroupAsync(id, callerUserId);
         if (!result.Success)
-            return BadRequest(new { message = result.ErrorMessage });
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => BadRequest(new { message = result.ErrorMessage })
+            };
+        }
 
         return Ok(result.Data);
     }
