@@ -30,8 +30,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
             {
                 return result.ErrorType switch
                 {
+                    ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                     ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                    _ => NotFound(new { message = result.ErrorMessage })
+                    _ => BadRequest(new { message = result.ErrorMessage })
                 };
             }
             return Ok(result.Data);
@@ -48,8 +49,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return Ok(result.Data);
@@ -64,8 +66,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return NoContent();
@@ -80,8 +83,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return Ok(result.Data);
@@ -110,8 +114,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => BadRequest(result.ErrorMessage)
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
 
@@ -127,8 +132,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return NoContent();
@@ -143,8 +149,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => NotFound(new { message = result.ErrorMessage })
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
         return NoContent();
@@ -166,8 +173,9 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
         {
             return result.ErrorType switch
             {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
                 ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
-                _ => BadRequest(result.ErrorMessage)
+                _ => BadRequest(new { message = result.ErrorMessage })
             };
         }
 
