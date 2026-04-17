@@ -10,21 +10,31 @@ using Vela.Domain.Entities.Recipes;
 namespace Vela.Application.Services;
 
 public class MealPlanService(
-    IMealPlanRepository mealPlanRepository, 
+    IMealPlanRepository mealPlanRepository,
     IRecipeRepository recipeRepository,
     IShoppingListRepository shoppingListRepository,
-    IGroupRepository groupRepository) : IMealPlanService
+    IGroupRepository groupRepository,
+    IGroupAuthorizationService groupAuthorizationService) : IMealPlanService
 {
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IRecipeRepository _recipeRepository  = recipeRepository;
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
+    private readonly IGroupAuthorizationService _groupAuthorizationService = groupAuthorizationService;
 
-    public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId, DateOnly startDate, DateOnly endDate)
+    private async Task<Result> AuthorizeMealPlanAccessAsync(MealPlan mealPlan, string callerUserId)
+    {
+        if (mealPlan.GroupId == null) return Result.Ok();
+        var group = await _groupRepository.GetGroupWithMembersAsync(mealPlan.GroupId.Value);
+        if (group == null) return Result.Fail("Group not found", ResultErrorType.NotFound);
+        return _groupAuthorizationService.AuthorizeMembership(group, callerUserId);
+    }
+
+    public async Task<Result<MealPlanDto>> GetMealPlanAsync(string? userId, Guid? groupId, DateOnly startDate, DateOnly endDate, string callerUserId)
     {
         var hasUserId = !string.IsNullOrWhiteSpace(userId);
         var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
-        
+
         if (hasUserId == hasGroupId)
             return Result<MealPlanDto>.Fail("Mealplan must belong to either a user or a group");
 
@@ -34,16 +44,20 @@ public class MealPlanService(
         {
             mealPlan = await _mealPlanRepository.GetByUserIdAsync(userId);
             if (mealPlan == null)
-                return Result<MealPlanDto>.Fail($"Meal plan with userID {userId} not found");
+                return Result<MealPlanDto>.Fail($"Meal plan with userID {userId} not found", ResultErrorType.NotFound);
         }
         else
         {
             Guid foundgroupId = groupId ?? Guid.Empty;
             mealPlan = await _mealPlanRepository.GetByGroupIdAsync(foundgroupId);
             if (mealPlan == null)
-                return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found");
+                return Result<MealPlanDto>.Fail($"Meal plan with groupId {groupId} not found", ResultErrorType.NotFound);
+
+            var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
+            if (!authResult.Success)
+                return Result<MealPlanDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         }
-        
+
         mealPlan = await _mealPlanRepository.GetByIdWithEntriesByDateRangeAsync(mealPlan.Id, startDate, endDate);
         
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
@@ -73,11 +87,15 @@ public class MealPlanService(
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
 
-    public async Task<Result> UpdateMealPlanAsync(Guid mealPlanId, string name, string? description)
+    public async Task<Result> UpdateMealPlanAsync(Guid mealPlanId, string name, string? description, string callerUserId)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         mealPlan.Name = name;
         mealPlan.Description = description;
@@ -87,26 +105,34 @@ public class MealPlanService(
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteMealPlanAsync(Guid mealPlanId)
+    public async Task<Result> DeleteMealPlanAsync(Guid mealPlanId, string callerUserId)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         await _mealPlanRepository.DeleteAsync(mealPlan);
         await _mealPlanRepository.SaveChangesAsync();
         return Result.Ok();
     }
 
-    public async Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request)
+    public async Task<Result<MealPlanEntryDto>> AddRecipeToMealPlanAsync(Guid mealPlanId, AddMealPlanEntryRequest request, string callerUserId)
     {
         var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
         if (mealPlan == null)
-            return Result<MealPlanEntryDto>.Fail($"Meal plan with ID {mealPlanId} not found");
+            return Result<MealPlanEntryDto>.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
+        if (!authResult.Success)
+            return Result<MealPlanEntryDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         var recipe = await _recipeRepository.GetByUuidAsync(request.RecipeId);
         if (recipe == null)
-            return Result<MealPlanEntryDto>.Fail($"Recipe with ID {request.RecipeId} not found");
+            return Result<MealPlanEntryDto>.Fail($"Recipe with ID {request.RecipeId} not found", ResultErrorType.NotFound);
 
         var entry = new MealPlanEntry
         {
@@ -128,15 +154,23 @@ public class MealPlanService(
         return Result<MealPlanEntryDto>.Ok(MapEntryToDto(entry));
     }
 
-    public async Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId)
+    public async Task<Result> RemoveRecipeFromMealPlanAsync(Guid mealPlanId, Guid entryId, string callerUserId)
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
-            return Result.Fail($"Meal plan entry with ID {entryId} not found");
+            return Result.Fail($"Meal plan entry with ID {entryId} not found", ResultErrorType.NotFound);
 
         if (entry.MealPlanId != mealPlanId)
             return Result.Fail("Entry does not belong to this meal plan");
-        
+
+        var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
+        if (mealPlan == null)
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
+
         await _shoppingListRepository.DeleteItemsByMealPlanEntryIdAsync(entryId);
 
         await _mealPlanRepository.RemoveEntryAsync(entryId);
@@ -144,20 +178,28 @@ public class MealPlanService(
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int? servings, DateOnly? newdate = null)
+    public async Task<Result> UpdateMealPlanEntryServingsAsync(Guid mealPlanId, Guid entryId, int? servings, DateOnly? newDate, string callerUserId)
     {
         var entry = await _mealPlanRepository.GetEntryAsync(entryId);
         if (entry == null)
-            return Result.Fail($"Meal plan entry with ID {entryId} not found");
+            return Result.Fail($"Meal plan entry with ID {entryId} not found", ResultErrorType.NotFound);
+
+        var mealPlan = await _mealPlanRepository.GetByUuidAsync(mealPlanId);
+        if (mealPlan == null)
+            return Result.Fail($"Meal plan with ID {mealPlanId} not found", ResultErrorType.NotFound);
+
+        var authResult = await AuthorizeMealPlanAccessAsync(mealPlan, callerUserId);
+        if (!authResult.Success)
+            return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         if (servings.HasValue)
         {
             entry.Servings = servings.Value;
         }
 
-        if (newdate.HasValue)
+        if (newDate.HasValue)
         {
-            entry.Date = newdate.Value;
+            entry.Date = newDate.Value;
         }
 
         await _mealPlanRepository.SaveChangesAsync();

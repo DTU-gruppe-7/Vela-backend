@@ -109,11 +109,11 @@ public class GroupService(
     {
         var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
         if (group == null)
-            return Result<GroupDto>.Fail($"Group with ID {groupId} not found");
+            return Result<GroupDto>.Fail($"Group with ID {groupId} not found", ResultErrorType.NotFound);
 
         var authResult = _authorizationService.AuthorizeMembership(group, callerUserId);
         if (!authResult.Success)
-            return Result<GroupDto>.Fail(authResult.ErrorMessage!);
+            return Result<GroupDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
         var profiles = await _userRepository.GetUserProfilesByIdsAsync(group.Members.Select(m => m.UserId));
         return Result<GroupDto>.Ok(MapToDto(group, profiles));

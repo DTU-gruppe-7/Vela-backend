@@ -10,4 +10,6 @@ public interface IAuthService
     Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto requestDto);
     Task<Result> DeleteUserAsync(string userId);
     Task<Result<bool>> LogoutAsync(string userId);
+    Task<Result<UserDietaryPreferencesDto>> GetDietaryPreferencesAsync(string userId);
+    Task<Result<UserDietaryPreferencesDto>> UpdateDietaryPreferencesAsync(string userId, UpdateUserDietaryPreferencesRequestDto requestDto);
 }
