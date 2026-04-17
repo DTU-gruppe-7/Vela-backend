@@ -38,11 +38,11 @@ public class MealPlanService(
         if (hasUserId == hasGroupId)
             return Result<MealPlanDto>.Fail("Mealplan must belong to either a user or a group");
 
-        MealPlan mealPlan;
+        MealPlan? mealPlan;
 
         if (hasUserId)
         {
-            mealPlan = await _mealPlanRepository.GetByUserIdAsync(userId);
+            mealPlan = await _mealPlanRepository.GetByUserIdAsync(userId!);
             if (mealPlan == null)
                 return Result<MealPlanDto>.Fail($"Meal plan with userID {userId} not found", ResultErrorType.NotFound);
         }
@@ -59,7 +59,9 @@ public class MealPlanService(
         }
 
         mealPlan = await _mealPlanRepository.GetByIdWithEntriesByDateRangeAsync(mealPlan.Id, startDate, endDate);
-        
+        if (mealPlan == null)
+            return Result<MealPlanDto>.Fail("Meal plan entries not found", ResultErrorType.NotFound);
+
         return Result<MealPlanDto>.Ok(MapToDto(mealPlan));
     }
     
@@ -259,7 +261,9 @@ public class MealPlanService(
                 }
             }
         }
-        var mealPlanDto = MapToDto(personalMealPlan);
+        var mealPlanDto = personalMealPlan != null
+            ? MapToDto(personalMealPlan)
+            : new MealPlanDto { UserId = userId, Name = "Aggregated" };
         mealPlanDto.Entries = aggregatedEntries;
         return Result<MealPlanDto>.Ok(mealPlanDto);
     }   
@@ -268,8 +272,8 @@ public class MealPlanService(
         return new MealPlanDto
         {
             Id = mealPlan.Id,
-            UserId = mealPlan.UserId,
-            Name = mealPlan.Name,
+            UserId = mealPlan.UserId ?? string.Empty,
+            Name = mealPlan.Name ?? string.Empty,
             Description = mealPlan.Description,
             CreatedAt = mealPlan.CreatedAt,
             UpdatedAt = mealPlan.UpdatedAt,

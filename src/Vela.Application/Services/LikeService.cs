@@ -53,7 +53,7 @@ public class LikeService(
     {
         var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
         if (group == null)
-            Result.Fail("Group not found");
+            return;
         
         var match = new Match
         {

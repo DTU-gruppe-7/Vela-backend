@@ -215,7 +215,7 @@ public class GroupService(
             return Result<IEnumerable<MatchDto>>.Fail(authResult.ErrorMessage!);
 
         var matches = await _groupRepository.GetMatchesByGroupIdAsync(groupId);
-        return Result<IEnumerable<MatchDto>>.Ok(matches.Select(MapMatchToDto));
+        return Result<IEnumerable<MatchDto>>.Ok(matches.Where(m => m != null).Select(m => MapMatchToDto(m!)));
     }
 
     public async Task<Result> ChangeMemberRoleAsync(Guid groupId, string targetUserId, GroupRole newRole, string callerUserId)

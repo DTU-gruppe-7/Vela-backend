@@ -9,7 +9,8 @@ namespace Vela.Application.Services;
 
 public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     IIngredientRepository ingredientRepository, IMealPlanRepository mealPlanRepository,
-    IGroupRepository groupRepository, IGroupAuthorizationService groupAuthorizationService) : IShoppingListService
+    IGroupRepository groupRepository, IGroupAuthorizationService groupAuthorizationService,
+    IShoppingListIngredientExclusionProvider ingredientExclusionProvider) : IShoppingListService
     
 {
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
@@ -17,6 +18,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     private readonly IMealPlanRepository _mealPlanRepository = mealPlanRepository;
     private readonly IGroupRepository _groupRepository = groupRepository;
     private readonly IGroupAuthorizationService _groupAuthorizationService = groupAuthorizationService;
+    private readonly IShoppingListIngredientExclusionProvider _ingredientExclusionProvider = ingredientExclusionProvider;
 
     private async Task<Result> AuthorizeShoppingListAccessAsync(ShoppingList shoppingList, string callerUserId)
     {
@@ -24,6 +26,71 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         var group = await _groupRepository.GetGroupWithMembersAsync(shoppingList.GroupId.Value);
         if (group == null) return Result.Fail("Group not found", ResultErrorType.NotFound);
         return _groupAuthorizationService.AuthorizeMembership(group, callerUserId);
+    }
+
+    private static string GetCanonicalUnit(string? unit) => unit?.Trim().ToLowerInvariant() switch
+    {
+        "g" => "g",
+        "ml" => "ml",
+        _ => "stk"
+    };
+
+    private static string NormalizeUnit(string? unit) =>
+        string.IsNullOrWhiteSpace(unit) ? "stk" : unit.Trim().ToLowerInvariant();
+
+    private static string ResolveTargetUnit(string dbUnit, string recipeUnit) =>
+        dbUnit == "stk" && !string.IsNullOrWhiteSpace(recipeUnit) ? recipeUnit : dbUnit;
+
+    private static string ResolveWinningUnit(string currentUnit, string incomingUnit)
+    {
+        var normalizedCurrent = NormalizeUnit(currentUnit);
+        var normalizedIncoming = NormalizeUnit(incomingUnit);
+
+        if (normalizedCurrent == normalizedIncoming)
+            return normalizedCurrent;
+
+        // Business rule: if g and ml collide, g always wins.
+        if (normalizedCurrent == "g" || normalizedIncoming == "g")
+            return "g";
+        if (normalizedCurrent == "ml" || normalizedIncoming == "ml")
+            return "ml";
+
+        if (normalizedCurrent == "stk")
+            return normalizedIncoming;
+        if (normalizedIncoming == "stk")
+            return normalizedCurrent;
+
+        return normalizedCurrent;
+    }
+
+    private static bool IsWeightOrVolumeUnit(string unit) => unit is "g" or "ml";
+
+    private static (double Quantity, string Unit) ConvertToUnit(
+        double quantity,
+        string sourceUnit,
+        string targetUnit,
+        IngredientCategory category)
+    {
+        var normalizedSource = NormalizeUnit(sourceUnit);
+        var normalizedTarget = NormalizeUnit(targetUnit);
+
+        var (convertedQuantity, convertedUnit) =
+            UnitConverter.Normalize(quantity, normalizedSource, normalizedTarget, category);
+
+        if (convertedUnit.Equals(normalizedTarget, StringComparison.OrdinalIgnoreCase))
+            return (convertedQuantity, normalizedTarget);
+
+        // If conversion path is not available but units are g/ml family, force 1:1 fallback.
+        if (IsWeightOrVolumeUnit(normalizedSource) && IsWeightOrVolumeUnit(normalizedTarget))
+        {
+            var (asMlQty, asMlUnit) = UnitConverter.Normalize(quantity, normalizedSource, "ml", category);
+            if (asMlUnit == "ml")
+            {
+                return normalizedTarget == "g" ? (asMlQty, "g") : (asMlQty, "ml");
+            }
+        }
+
+        return (convertedQuantity, NormalizeUnit(convertedUnit));
     }
     
     public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string callerUserId)
@@ -35,18 +102,18 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         if (hasUserId == hasGroupId)
             return Result<ShoppingListDto>.Fail("Shopping list must belong to either a user or a group. Not both or none");
 
-        ShoppingList shoppingList;
+        ShoppingList? shoppingList;
         List<ShoppingListItem> assignedItems = new();
 
         if (hasUserId)
         {
-            shoppingList = await _shoppingListRepository.GetByUserIdAsync(userId);
+            shoppingList = await _shoppingListRepository.GetByUserIdAsync(userId!);
             if (shoppingList == null)
 
                 return Result<ShoppingListDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
 
             // Henter varer fra grupper, som er tildelt denne bruger
-            assignedItems = await _shoppingListRepository.GetItemsAssignedToUserAsync(userId);
+            assignedItems = await _shoppingListRepository.GetItemsAssignedToUserAsync(userId!);
 
         }
         else
@@ -72,6 +139,21 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 allItems.Add(assignedItem);
             }
         }
+        
+        // Byg et lookup for "fremmede" lister
+        var foreignListIds = allItems
+            .Where(x => x.ShoppingListId != shoppingList.Id)
+            .Select(x => x.ShoppingListId)
+            .Distinct()
+            .ToList();
+
+        var listNameById = new Dictionary<Guid, string?>();
+
+        foreach (var listId in foreignListIds)
+        {
+            var foreignList = await _shoppingListRepository.GetByIdWithItemsAsync(listId);
+            listNameById[listId] = foreignList?.Name;
+        }
 
         return Result<ShoppingListDto>.Ok(new ShoppingListDto
         {
@@ -88,9 +170,15 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 AssignedUserId = i.AssignedUserId,
                 Quantity = i.Quantity,
                 // Hvis varen er tildelt fra en anden liste, markerer vi det i navnet
-                RecipeName = i.ShoppingListId != shoppingList.Id 
-                    ? "(Fra gruppe) " + (i.MealPlanEntry?.Recipe?.Name ?? "Manuel")
-                    : i.MealPlanEntry?.Recipe?.Name + " (" + i.MealPlanEntry?.Date + ")",
+                RecipeName = i.ShoppingListId != shoppingList.Id
+                ? $"{(
+                    listNameById.GetValueOrDefault(i.ShoppingListId)?
+                        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                        .FirstOrDefault() is { Length: > 0 } firstWord
+                        ? $"(Fra {firstWord} gruppen)"
+                        : "(Fra ukendt gruppe)"
+                  )} {i.MealPlanEntry?.Recipe?.Name} ({i.MealPlanEntry?.Date})"
+                : $"{i.MealPlanEntry?.Recipe?.Name} ({i.MealPlanEntry?.Date})",
                 Category = i.ItemCategory,
                 Unit = i.Unit,
                 Price = i.Price,
@@ -244,7 +332,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             };
         }
         
-        shoppingList.Items.Add(item);
+        shoppingList.Items!.Add(item);
         await _shoppingListRepository.AddItemAsync(item);
 
         shoppingList.UpdatedAt = DateTimeOffset.UtcNow;
@@ -318,7 +406,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         }
         else
         {
-            var userShoppingList = await _shoppingListRepository.GetByUserIdAsync(mealPlan.UserId);
+            var userShoppingList = await _shoppingListRepository.GetByUserIdAsync(mealPlan.UserId!);
             if (userShoppingList == null)
                 return Result<ShoppingListDto?>.Fail("User shopping list not found", ResultErrorType.NotFound);
 
@@ -346,32 +434,62 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             var servingBase = entry.Recipe.ServingSize > 0 ? entry.Recipe.ServingSize : 1;
             var scaleFactor = (double)entry.Servings / servingBase;
 
-            var recipeTotals = new Dictionary<(
-                Guid IngredientId, 
+            var recipeTotals = new Dictionary<string, (
+                Guid? IngredientId,
                 string OriginalName,
-                string NormalizedName, 
                 IngredientCategory Category,
-                string? Unit)
-                , double>();
+                string Unit,
+                double Quantity)>();
             
             foreach (var recipeIngred in entry.Recipe.Ingredients)
             {
-                var (normalizedQty, normalizedUnit) =
-                    UnitConverter.Normalize(recipeIngred.Quantity * scaleFactor, recipeIngred.Unit, recipeIngred.Ingredient.Unit, recipeIngred.Ingredient.Category);
-                
                 var originalName = recipeIngred.Ingredient.Name;
-                var normalizedNameForKey = originalName.Trim().ToLowerInvariant();
+                if (_ingredientExclusionProvider.IsExcluded(originalName))
+                    continue;
 
-                var key = (
-                    Id: recipeIngred.IngredientId,
-                    OriginalName: originalName,
-                    Name: normalizedNameForKey, 
-                    Category: recipeIngred.Ingredient.Category, 
-                    UnitConverter: normalizedUnit);
-                
-                recipeTotals[key] = recipeTotals.TryGetValue(key, out var existingQty)
-                    ? existingQty + normalizedQty
-                    : normalizedQty;
+                var normalizedNameForKey = originalName.Trim().ToLowerInvariant();
+                var dbUnit = GetCanonicalUnit(recipeIngred.Ingredient.Unit);
+                var recipeUnit = NormalizeUnit(recipeIngred.Unit);
+                var targetUnit = ResolveTargetUnit(dbUnit, recipeUnit);
+
+                var (quantityInTargetUnit, normalizedTargetUnit) = ConvertToUnit(
+                    recipeIngred.Quantity * scaleFactor,
+                    recipeUnit,
+                    targetUnit,
+                    recipeIngred.Ingredient.Category);
+
+                if (recipeTotals.TryGetValue(normalizedNameForKey, out var existingValue))
+                {
+                    var winningUnit = ResolveWinningUnit(existingValue.Unit, normalizedTargetUnit);
+
+                    var (existingQuantityInWinningUnit, _) = ConvertToUnit(
+                        existingValue.Quantity,
+                        existingValue.Unit,
+                        winningUnit,
+                        existingValue.Category);
+
+                    var (incomingQuantityInWinningUnit, _) = ConvertToUnit(
+                        quantityInTargetUnit,
+                        normalizedTargetUnit,
+                        winningUnit,
+                        recipeIngred.Ingredient.Category);
+
+                    recipeTotals[normalizedNameForKey] = (
+                        existingValue.IngredientId,
+                        existingValue.OriginalName,
+                        existingValue.Category,
+                        winningUnit,
+                        existingQuantityInWinningUnit + incomingQuantityInWinningUnit);
+                }
+                else
+                {
+                    recipeTotals[normalizedNameForKey] = (
+                        recipeIngred.IngredientId,
+                        originalName,
+                        recipeIngred.Ingredient.Category,
+                        normalizedTargetUnit,
+                        quantityInTargetUnit);
+                }
             }
 
             foreach (var kvp in recipeTotals)
@@ -380,12 +498,12 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 {
                     Id = Guid.NewGuid(),
                     ShoppingListId = shoppingList.Id,
-                    IngredientId = kvp.Key.IngredientId,
-                    IngredientName = kvp.Key.OriginalName,
-                    ItemCategory =  kvp.Key.Category,
+                    IngredientId = kvp.Value.IngredientId,
+                    IngredientName = kvp.Value.OriginalName,
+                    ItemCategory = kvp.Value.Category,
                     MealPlanEntryId = entry.Id,
-                    Quantity = kvp.Value,
-                    Unit = kvp.Key.Unit,
+                    Quantity = kvp.Value.Quantity,
+                    Unit = kvp.Value.Unit,
                     IsBought = false
                 };
                 await _shoppingListRepository.AddItemAsync(newItem);
@@ -412,7 +530,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         if (!authResult.Success)
             return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
-        var hasMatchingItems = shoppingList.Items.Any(i => i.MealPlanEntryId == mealPlanEntryId);
+        var hasMatchingItems = shoppingList.Items?.Any(i => i.MealPlanEntryId == mealPlanEntryId) ?? false;
         if (!hasMatchingItems)
         {
             mealPlanEntry.AddedToShoppingList = false;
@@ -450,10 +568,10 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         if (!authResult.Success)
             return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
 
-        if (!shoppingList.Items.Any())
+        if (!(shoppingList.Items?.Any() ?? false))
             return Result.Ok();
-        
-        await _shoppingListRepository.RemoveRangeAsync(shoppingList.Items);
+
+        await _shoppingListRepository.RemoveRangeAsync(shoppingList.Items!);
         await _shoppingListRepository.SaveChangesAsync(); 
 
         return Result.Ok();
@@ -470,7 +588,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         if (!authResult.Success)
             return Result.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         
-        var itemsToRemove = shoppingList.Items.Where(i => i.IsBought).ToList();
+        var itemsToRemove = shoppingList.Items?.Where(i => i.IsBought).ToList() ?? [];
 
         if (!itemsToRemove.Any())
             return Result.Ok();
@@ -481,3 +599,6 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
 }
+
+
+

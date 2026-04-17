@@ -20,21 +20,21 @@ public static class UnitConverter
             return (val, defaultUnit);
         }
         
-        // If no target unit specified or units match, return as-is
-        if (string.IsNullOrWhiteSpace(targetUnit) || 
+        // If no target unit specified or units match, return as-is (but spoon units become ml)
+        if (string.IsNullOrWhiteSpace(targetUnit) ||
             unit.Equals(targetUnit, StringComparison.OrdinalIgnoreCase))
         {
-            return (val, unit.ToLower());
+            return SpoonToMlIfNeeded(val, unit.ToLower());
         }
-        
+
         // Try to convert from source unit to target unit
         if (TryConvert(val, unit, targetUnit, category, out var convertedQuantity))
         {
             return (convertedQuantity, targetUnit.ToLower());
         }
-        
-        // If conversion not possible, return original values
-        return (val, unit.ToLower());
+
+        // If conversion not possible, return original values (but spoon units become ml)
+        return SpoonToMlIfNeeded(val, unit.ToLower());
     }
     
     private static bool TryConvert(double quantity, string fromUnit, string toUnit, IngredientCategory? category, out double result)
@@ -61,6 +61,15 @@ public static class UnitConverter
             {
                 // Convert: quantity * fromFactor.Factor / toFactor.Factor
                 result = quantity * fromFactor.Factor / toFactor.Factor;
+                return true;
+            }
+
+            // Convert spoon units to gram targets using the same app fallback as liquid conversions.
+            if (IsSpoonUnit(fromUnit) && toFactor.BaseUnit == "g")
+            {
+                var milliliters = quantity * fromFactor.Factor;
+                var grams = milliliters;
+                result = grams / toFactor.Factor;
                 return true;
             }
             
@@ -96,6 +105,16 @@ public static class UnitConverter
         
         return false;
     }
+
+    private static (double Quantity, string Unit) SpoonToMlIfNeeded(double val, string unit) =>
+        unit switch
+        {
+            "spsk" => (val * 15, "ml"),
+            "tsk"  => (val * 5, "ml"),
+            _      => (val, unit)
+        };
+
+    private static bool IsSpoonUnit(string unit) => unit is "spsk" or "tsk";
     
     private static bool ShouldUseLiquidConversion(IngredientCategory? category)
     {

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Vela.API.Configuration;
 using Vela.API.Notification;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.External;
@@ -94,6 +95,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IRecipeService, RecipeService>();
         services.AddScoped<ILikeService, LikeService>();
+        services.AddSingleton<IShoppingListIngredientExclusionProvider, ShoppingListIngredientExclusionProvider>();
         services.AddScoped<IShoppingListService, ShoppingListService>();
         services.AddScoped<IMealPlanService, MealPlanService>();
         services.AddScoped<IGroupAuthorizationService, GroupAuthorizationService>();

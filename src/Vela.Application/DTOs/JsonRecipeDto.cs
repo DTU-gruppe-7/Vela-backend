@@ -5,10 +5,10 @@ namespace Vela.Application.DTOs;
 public class JsonRecipeDto
 {
     [JsonPropertyName("titel")]
-    public string Titel { get; set; }
+    public string Titel { get; set; } = null!;
 
     [JsonPropertyName("beskrivelse")]
-    public string Beskrivelse { get; set; }
+    public string Beskrivelse { get; set; } = null!;
 
     [JsonPropertyName("kategori")]
     public string? Kategori { get; set; }
@@ -17,7 +17,7 @@ public class JsonRecipeDto
     public List<string> Noegleord { get; set; } = new();
 
     [JsonPropertyName("antal_personer")]
-    public string AntalPersoner { get; set; }
+    public string AntalPersoner { get; set; } = null!;
 
     [JsonPropertyName("ingredienser")]
     public Dictionary<string, List<string>> Ingredienser { get; set; } = new();

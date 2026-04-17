@@ -5,8 +5,8 @@ namespace Vela.Application.DTOs.Notification;
 
 public class SignalRNotificationDto
 {
-    public string Title { get; set; }
-    public string Message { get; set; }
+    public string Title { get; set; } = null!;
+    public string Message { get; set; } = null!;
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public NotificationType Type { get; set; }
     public object? Payload { get; set; }

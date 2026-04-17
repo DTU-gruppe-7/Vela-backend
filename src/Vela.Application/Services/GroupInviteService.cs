@@ -91,7 +91,7 @@ public class GroupInviteService(
     public async Task<Result<IEnumerable<GroupInviteDto>>> GetInvitesByUserIdAsync(string userId)
     {
         var invites = await _groupInviteRepository.GetInvitesByUserIdAsync(userId);
-        return Result<IEnumerable<GroupInviteDto>>.Ok(invites.Select(MapToDto));
+        return Result<IEnumerable<GroupInviteDto>>.Ok(invites.Where(i => i != null).Select(i => MapToDto(i!)));
     }
 
     public async Task<Result<IEnumerable<GroupInviteDto>>> GetInvitesByGroupIdAsync(Guid groupId, string callerUserId)
@@ -105,7 +105,7 @@ public class GroupInviteService(
             return Result<IEnumerable<GroupInviteDto>>.Fail(authResult.ErrorMessage!);
 
         var invites = await _groupInviteRepository.GetInvitesByGroupIdAsync(groupId);
-        return Result<IEnumerable<GroupInviteDto>>.Ok(invites.Select(MapToDto));
+        return Result<IEnumerable<GroupInviteDto>>.Ok(invites.Where(i => i != null).Select(i => MapToDto(i!)));
     }
 
     private GroupInviteDto MapToDto(GroupInvite invite)
