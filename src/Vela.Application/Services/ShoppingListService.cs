@@ -545,7 +545,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
     
-    public async Task<Result> AssignItemToUserAsync(Guid itemId, string targetUserId)
+    public async Task<Result> AssignItemToUserAsync(Guid itemId, string? targetUserId)
     {
         var item = await _shoppingListRepository.GetItemByIdAsync(itemId);
         if (item == null) return Result.Fail("Item not found", ResultErrorType.NotFound);

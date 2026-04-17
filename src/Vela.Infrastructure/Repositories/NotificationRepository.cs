@@ -9,7 +9,7 @@ public class NotificationRepository(AppDbContext context) : Repository<Notificat
 {
     public async Task<IEnumerable<Notification>> GetByUserIdAsync(string userId)
     {
-        return await context.Notifications
+        return await _context.Notifications
             .Where(n => n.UserId == userId)
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync();

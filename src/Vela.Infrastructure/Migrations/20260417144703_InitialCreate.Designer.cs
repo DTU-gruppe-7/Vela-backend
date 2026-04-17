@@ -12,7 +12,7 @@ using Vela.Infrastructure.Data;
 namespace Vela.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260408100759_InitialCreate")]
+    [Migration("20260417144703_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -380,7 +380,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.Recipe.Ingredient", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.Recipes.Ingredient", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -428,7 +428,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("Ingredients");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.Recipe.Recipe", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.Recipes.Recipe", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -470,7 +470,7 @@ namespace Vela.Infrastructure.Migrations
                     b.ToTable("Recipes");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.Recipe.RecipeIngredient", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.Recipes.RecipeIngredient", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -597,6 +597,15 @@ namespace Vela.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("AvoidGluten")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AvoidLactose")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AvoidNuts")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -622,6 +631,9 @@ namespace Vela.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsVegan")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastName")
@@ -762,7 +774,7 @@ namespace Vela.Infrastructure.Migrations
 
             modelBuilder.Entity("Vela.Domain.Entities.Like", b =>
                 {
-                    b.HasOne("Vela.Domain.Entities.Recipe.Recipe", "Recipe")
+                    b.HasOne("Vela.Domain.Entities.Recipes.Recipe", "Recipe")
                         .WithMany()
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -779,7 +791,7 @@ namespace Vela.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Vela.Domain.Entities.Recipe.Recipe", null)
+                    b.HasOne("Vela.Domain.Entities.Recipes.Recipe", null)
                         .WithMany()
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -807,7 +819,7 @@ namespace Vela.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Vela.Domain.Entities.Recipe.Recipe", "Recipe")
+                    b.HasOne("Vela.Domain.Entities.Recipes.Recipe", "Recipe")
                         .WithMany()
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -827,15 +839,15 @@ namespace Vela.Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.Recipe.RecipeIngredient", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.Recipes.RecipeIngredient", b =>
                 {
-                    b.HasOne("Vela.Domain.Entities.Recipe.Ingredient", "Ingredient")
+                    b.HasOne("Vela.Domain.Entities.Recipes.Ingredient", "Ingredient")
                         .WithMany()
                         .HasForeignKey("IngredientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Vela.Domain.Entities.Recipe.Recipe", "Recipe")
+                    b.HasOne("Vela.Domain.Entities.Recipes.Recipe", "Recipe")
                         .WithMany("Ingredients")
                         .HasForeignKey("RecipeId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -861,7 +873,7 @@ namespace Vela.Infrastructure.Migrations
 
             modelBuilder.Entity("Vela.Domain.Entities.ShoppingList.ShoppingListItem", b =>
                 {
-                    b.HasOne("Vela.Domain.Entities.MealPlan.MealPlanEntry", null)
+                    b.HasOne("Vela.Domain.Entities.MealPlan.MealPlanEntry", "MealPlanEntry")
                         .WithMany()
                         .HasForeignKey("MealPlanEntryId")
                         .OnDelete(DeleteBehavior.Cascade);
@@ -871,6 +883,8 @@ namespace Vela.Infrastructure.Migrations
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("MealPlanEntry");
                 });
 
             modelBuilder.Entity("Vela.Domain.Entities.Group.Group", b =>
@@ -885,7 +899,7 @@ namespace Vela.Infrastructure.Migrations
                     b.Navigation("Entries");
                 });
 
-            modelBuilder.Entity("Vela.Domain.Entities.Recipe.Recipe", b =>
+            modelBuilder.Entity("Vela.Domain.Entities.Recipes.Recipe", b =>
                 {
                     b.Navigation("Ingredients");
                 });

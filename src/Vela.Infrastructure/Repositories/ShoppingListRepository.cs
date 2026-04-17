@@ -18,7 +18,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         return await _dbSet
             .Include(sl => sl.Items)!
             .ThenInclude(i => i.MealPlanEntry)
-            .ThenInclude(mpe => mpe.Recipe)
+            .ThenInclude(mpe => mpe!.Recipe)
             .FirstOrDefaultAsync(sl => sl.Id == id);
     }
 
@@ -31,7 +31,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         return await _dbSet
             .Include(sl => sl.Items)!
             .ThenInclude(i => i.MealPlanEntry)
-            .ThenInclude(mpe => mpe.Recipe)
+            .ThenInclude(mpe => mpe!.Recipe)
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.UserId == userId);
     }
@@ -45,7 +45,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         return await _dbSet
             .Include(sl => sl.Items)!
             .ThenInclude(i => i.MealPlanEntry)
-            .ThenInclude(mpe => mpe.Recipe)
+            .ThenInclude(mpe => mpe!.Recipe)
             .AsNoTracking()
             .SingleOrDefaultAsync(sl => sl.GroupId == groupId);
     }
@@ -106,7 +106,7 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
     {
         return await _context.Set<ShoppingListItem>()
             .Include(i => i.MealPlanEntry)
-            .ThenInclude(mpe => mpe.Recipe)
+            .ThenInclude(mpe => mpe!.Recipe)
             .Where(i => i.AssignedUserId == userId && !i.IsBought) // Vi henter kun ting der ikke er købt
             .AsNoTracking() 
             .ToListAsync();

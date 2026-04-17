@@ -14,7 +14,7 @@ public interface IShoppingListService
     Task<Result> DeleteShoppingListAsync(Guid id);
     Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(Guid mealPlanId, DateOnly startDate, DateOnly endDate, IReadOnlyCollection<Guid>? excludedEntryIds, string callerUserId);
     Task<Result> DeleteMealPlanEntryAsync(Guid id, Guid mealPlanEntryId, string callerUserId);
-    Task<Result> AssignItemToUserAsync(Guid itemId, string targetUserId);
+    Task<Result> AssignItemToUserAsync(Guid itemId, string? targetUserId);
     Task<Result> ClearAllItemsAsync(Guid shoppingListId, string callerUserId);
     Task<Result> ClearPurchasedItemsAsync(Guid shoppingListId, string callerUserId);
 }   
