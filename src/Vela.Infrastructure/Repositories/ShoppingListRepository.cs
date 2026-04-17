@@ -102,4 +102,14 @@ public class ShoppingListRepository(AppDbContext context) : Repository<ShoppingL
         _context.Set<ShoppingListItem>().RemoveRange(items);
     }
 
+    public async Task<List<ShoppingListItem>> GetItemsAssignedToUserAsync(string userId)
+    {
+        return await _context.Set<ShoppingListItem>()
+            .Include(i => i.MealPlanEntry)
+            .ThenInclude(mpe => mpe.Recipe)
+            .Where(i => i.AssignedUserId == userId && !i.IsBought) // Vi henter kun ting der ikke er købt
+            .AsNoTracking() 
+            .ToListAsync();
+    }
+
 }

@@ -10,6 +10,7 @@ namespace Vela.Application.Services;
 public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     IIngredientRepository ingredientRepository, IMealPlanRepository mealPlanRepository,
     IGroupRepository groupRepository, IGroupAuthorizationService groupAuthorizationService) : IShoppingListService
+    
 {
     private readonly IShoppingListRepository _shoppingListRepository = shoppingListRepository;
     private readonly IIngredientRepository _ingredientRepository = ingredientRepository;
@@ -26,6 +27,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
     }
     
     public async Task<Result<ShoppingListDto>> GetShoppingListAsync(string? userId, Guid? groupId, string callerUserId)
+
     {
         var hasUserId = !string.IsNullOrWhiteSpace(userId);
         var hasGroupId = groupId.HasValue && groupId != Guid.Empty;
@@ -34,12 +36,18 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
             return Result<ShoppingListDto>.Fail("Shopping list must belong to either a user or a group. Not both or none");
 
         ShoppingList shoppingList;
+        List<ShoppingListItem> assignedItems = new();
 
         if (hasUserId)
         {
             shoppingList = await _shoppingListRepository.GetByUserIdAsync(userId);
             if (shoppingList == null)
+
                 return Result<ShoppingListDto>.Fail("Shopping list not found", ResultErrorType.NotFound);
+
+            // Henter varer fra grupper, som er tildelt denne bruger
+            assignedItems = await _shoppingListRepository.GetItemsAssignedToUserAsync(userId);
+
         }
         else
         {
@@ -53,21 +61,36 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 return Result<ShoppingListDto>.Fail(authResult.ErrorMessage!, ResultErrorType.Forbidden);
         }
 
+        // Kombiner de faste varer på listen med de tildelte varer (assignedItems)
+        var allItems = shoppingList.Items?.ToList() ?? new List<ShoppingListItem>();
+        
+        foreach (var assignedItem in assignedItems)
+        {
+            // Vi tilføjer kun varen, hvis den ikke allerede findes på listen (undgår dubletter)
+            if (allItems.All(i => i.Id != assignedItem.Id))
+            {
+                allItems.Add(assignedItem);
+            }
+        }
+
         return Result<ShoppingListDto>.Ok(new ShoppingListDto
         {
             Id = shoppingList.Id,
-            UserId =  shoppingList.UserId,
-            GroupId =  shoppingList.GroupId,
+            UserId = shoppingList.UserId,
+            GroupId = shoppingList.GroupId,
             Name = shoppingList.Name,
-            CreatedAt =  shoppingList.CreatedAt,
-            UpdatedAt =  shoppingList.UpdatedAt,
-            Items = shoppingList.Items?.Select(i => new ShoppingListItemDto
+            CreatedAt = shoppingList.CreatedAt,
+            UpdatedAt = shoppingList.UpdatedAt,
+            Items = allItems.Select(i => new ShoppingListItemDto
             {
                 Id = i.Id,
                 IngredientName = i.IngredientName,
                 AssignedUserId = i.AssignedUserId,
                 Quantity = i.Quantity,
-                RecipeName = i.MealPlanEntry?.Recipe?.Name + " (" + i.MealPlanEntry?.Date + ")",
+                // Hvis varen er tildelt fra en anden liste, markerer vi det i navnet
+                RecipeName = i.ShoppingListId != shoppingList.Id 
+                    ? "(Fra gruppe) " + (i.MealPlanEntry?.Recipe?.Name ?? "Manuel")
+                    : i.MealPlanEntry?.Recipe?.Name + " (" + i.MealPlanEntry?.Date + ")",
                 Category = i.ItemCategory,
                 Unit = i.Unit,
                 Price = i.Price,
@@ -75,7 +98,7 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
                 IsBought = i.IsBought,
                 CreatedAt = i.CreatedAt,
                 UpdatedAt = i.UpdatedAt
-            }).ToList() ?? new()
+            }).ToList()
         });
     }
 
@@ -120,7 +143,6 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         
         if (hasUserId == hasGroupId)
             return Result<ShoppingListDto>.Fail("Shopping list must belong to either a user or a group. Not both or none");
-
 
         var shoppingList = new ShoppingList
         {
@@ -278,16 +300,6 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
     
-    /// <summary>
-    /// Generates shopping list items from a meal plan within the specified date range.
-    /// Merges duplicate ingredients within the same recipe to consolidate quantities.
-    /// Creates separate items for each recipe (cross-recipe duplicates are kept separate).
-    /// Each item tracks its source recipe via MealPlanEntryId for frontend display.
-    /// </summary>
-    /// <param name="mealPlanId">The meal plan to generate from</param>
-    /// <param name="startDate">Start date of the range (inclusive)</param>
-    /// <param name="endDate">End date of the range (inclusive)</param>
-    /// <returns>The updated shopping list with new items added</returns>
     public async Task<Result<ShoppingListDto?>> GenerateFromMealPlanAsync(
         Guid mealPlanId, DateOnly startDate, DateOnly endDate, IReadOnlyCollection<Guid>? excludedEntryIds, string callerUserId)
     {
@@ -409,7 +421,6 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         }
         
         await _shoppingListRepository.DeleteItemsByMealPlanEntryIdAsync(mealPlanEntryId);
-
         mealPlanEntry.AddedToShoppingList = false;
         
         await _shoppingListRepository.SaveChangesAsync();
@@ -470,4 +481,3 @@ public class ShoppingListService(IShoppingListRepository shoppingListRepository,
         return Result.Ok();
     }
 }
-
