@@ -1,8 +1,6 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
 using Microsoft.OpenApi;
-using Vela.API.Notification;
-using Vela.Application.Interfaces.Service.Notification;
 
 namespace Vela.API.Extensions;
 
@@ -21,13 +19,11 @@ public static class ServiceCollectionExtensions
         
         services.AddOpenApi(options =>
         {
-            options.AddDocumentTransformer((document, context, cancellationToken) =>
+            options.AddDocumentTransformer((document, _, _) =>
             {
-                // 1. Opret Components og SecuritySchemes hvis de er null
                 document.Components ??= new OpenApiComponents();
                 document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
 
-                // Tilføj Bearer skemaet
                 document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
                 {
                     Type = SecuritySchemeType.Http,
@@ -36,28 +32,23 @@ public static class ServiceCollectionExtensions
                     Description = "Indtast dit JWT token."
                 };
 
-                // 2. NY SYNTAKS: Brug OpenApiSecuritySchemeReference
                 var requirement = new OpenApiSecurityRequirement
                 {
-                    {
-                        new OpenApiSecuritySchemeReference("Bearer", document),
-                        new List<string>()
-                    }
+                    { new OpenApiSecuritySchemeReference("Bearer", document), new List<string>() }
                 };
 
-                // Anvend kravet globalt
-                if (document.Paths != null)
+                foreach (var path in document.Paths.Values)
                 {
-                    foreach (var path in document.Paths.Values)
+                    if (path.Operations is null)
+                        continue;
+
+                    foreach (var operation in path.Operations.Values)
                     {
-                        foreach (var operation in path.Operations.Values)
-                        {
-                            operation.Security ??= new List<OpenApiSecurityRequirement>();
-                            operation.Security.Add(requirement);
-                        }
+                        operation.Security ??= new List<OpenApiSecurityRequirement>();
+                        operation.Security.Add(requirement);
                     }
                 }
-                
+
                 return Task.CompletedTask;
             });
         });
@@ -99,7 +90,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         
         //Notifications
-        services.AddSignalR();
+        services.AddSignalR()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.Converters.Add(
+                    new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
+            });
         
         return services;
     }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Vela.Application.Common;
 using Vela.Application.DTOs.Group;
 using Vela.Application.Interfaces.Service;
 using Vela.Infrastructure.Identity;
@@ -9,16 +10,12 @@ namespace Vela.API.Controllers;
 
 [Authorize]
 public class GroupController(
-    IGroupService groupService, 
-    IGroupInviteService groupInviteService, 
-    IShoppingListService shoppingListService, 
-    IMealPlanService mealPlanService,
+    IGroupService groupService,
+    IGroupInviteService groupInviteService,
     UserManager<AppUser> userManager) : BaseApiController
 {
     private readonly IGroupService _groupService = groupService;
     private readonly IGroupInviteService _groupInviteService = groupInviteService;
-    private readonly IMealPlanService _mealPlanService = mealPlanService;
-    private readonly IShoppingListService _shoppingListService = shoppingListService;
     private readonly UserManager<AppUser> _userManager = userManager;
     
 
@@ -35,9 +32,17 @@ public class GroupController(
     [HttpGet("{id}")]
     public async Task<IActionResult> GetGroup(Guid id)
     {
-        var result = await _groupService.GetGroupAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.GetGroupAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+        {
+            return result.ErrorType switch
+            {
+                ResultErrorType.NotFound => NotFound(new { message = result.ErrorMessage }),
+                ResultErrorType.Forbidden => StatusCode(403, new { message = result.ErrorMessage }),
+                _ => BadRequest(new { message = result.ErrorMessage })
+            };
+        }
 
         return Ok(result.Data);
     }
@@ -46,36 +51,20 @@ public class GroupController(
     public async Task<ActionResult<GroupDto>> CreateGroup([FromBody] CreateGroupRequest request)
     {
         var userId = GetCurrentUserId();
-        var result = await _groupService.CreateGroupAsync(userId, request);
+        var result = await _groupService.CreateGroupWithResourcesAsync(userId, request);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
-        
-        var groupId = result.Data.Id;
-        var groupName = result.Data.Name;
-        
-        var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(null, groupId, groupName + "'s indkøbsliste");
-        if (!shoppingListResult.Success){
-            await _groupService.DeleteGroupAsync(groupId);
-            return BadRequest(new { message = shoppingListResult.ErrorMessage });
-        }
-        
-        var mealPlanResult = await _mealPlanService.CreateMealPlanAsync(null, groupId, groupName + "'s madplan");
-        if (!mealPlanResult.Success)
-        {
-            await _groupService.DeleteGroupAsync(groupId);
-            return BadRequest(new { message = mealPlanResult.ErrorMessage });
-        }
-            
-        
+
         return Ok(result.Data);
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteGroup(Guid id)
     {
-        var result = await _groupService.DeleteGroupAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.DeleteGroupAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(new { message = "Group deleted successfully" });
     }
@@ -83,9 +72,10 @@ public class GroupController(
     [HttpDelete("{id}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(Guid id, string userId)
     {
-        var result = await _groupService.RemoveMemberAsync(id, userId);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.RemoveMemberAsync(id, userId, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(new { message = "Member removed successfully" });
     }
@@ -93,29 +83,57 @@ public class GroupController(
     [HttpGet("{id}/matches")]
     public async Task<IActionResult> GetMatches(Guid id)
     {
-        var result = await _groupService.GetMatchesAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.GetMatchesAsync(id, callerUserId);
         if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+            return BadRequest(new { message = result.ErrorMessage });
 
         return Ok(result.Data);
+    }
+
+    [HttpPatch("{id}/members/{userId}/role")]
+    public async Task<IActionResult> ChangeMemberRole(Guid id, string userId, [FromBody] ChangeRoleRequest request)
+    {
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.ChangeMemberRoleAsync(id, userId, request.NewRole, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Role updated successfully" });
+    }
+
+    [HttpPost("{id}/leave")]
+    public async Task<IActionResult> LeaveGroup(Guid id)
+    {
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.LeaveGroupAsync(id, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "You have left the group" });
+    }
+
+    [HttpPatch("{id}/transfer-ownership")]
+    public async Task<IActionResult> TransferOwnership(Guid id, [FromBody] TransferOwnershipRequest request)
+    {
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupService.TransferOwnershipAsync(id, request.NewOwnerUserId, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Ownership transferred successfully" });
     }
 
     // Invites
     [HttpPost("{id}/invites")]
     public async Task<IActionResult> SendInvite(Guid id, [FromBody] SendInviteRequest request)
     {
-        var user = await  _userManager.FindByEmailAsync(request.Email);
+        var user = await _userManager.FindByEmailAsync(request.Email);
         if (user == null)
-        {
             return NotFound(new { message = "Der findes ingen bruger med denne e-mail adresse." });
-        }
-        
-        var existingInvites = await _groupInviteService.GetInvitesByGroupIdAsync(id);
-        if (existingInvites.Data != null && existingInvites.Data.Any(i => i.UserId == user.Id))
-        {
-            return BadRequest(new { message = "Der er allerede sendt en invitation til denne bruger for denne gruppe." });
-        }
-        var result = await _groupInviteService.SendInviteAsync(user.Id, id);
+
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupInviteService.SendInviteAsync(user.Id, id, callerUserId);
         if (!result.Success)
             return BadRequest(new { message = result.ErrorMessage });
 
@@ -125,7 +143,11 @@ public class GroupController(
     [HttpGet("{id}/invites")]
     public async Task<IActionResult> GetInvitesByGroup(Guid id)
     {
-        var result = await _groupInviteService.GetInvitesByGroupIdAsync(id);
+        var callerUserId = GetCurrentUserId();
+        var result = await _groupInviteService.GetInvitesByGroupIdAsync(id, callerUserId);
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
         return Ok(result.Data);
     }
 
@@ -157,5 +179,17 @@ public class GroupController(
         var userId = GetCurrentUserId();
         var result = await _groupInviteService.GetInvitesByUserIdAsync(userId);
         return Ok(result.Data);
+    }
+    
+    [HttpPatch("{groupId}")]
+    public async Task<IActionResult> UpdateName(Guid groupId, [FromBody] UpdateGroupNameRequest request)
+    {
+        var callerUserId = GetCurrentUserId(); 
+        var result = await _groupService.UpdateGroupNameAsync(groupId, request.Name, callerUserId);
+
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+        
+        return Ok(new { message = "Navnet er opdateret" });
     }
 }

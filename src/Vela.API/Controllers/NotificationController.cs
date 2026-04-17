@@ -31,8 +31,13 @@ public class NotificationsController(INotificationService notificationService) :
 
         if (!result.Success)
         { 
-            if (result.ErrorMessage.Contains("Notification not found")) return NotFound(result.ErrorMessage);
-            if (result.ErrorMessage.Contains("Unauthorized")) return Unauthorized(result.ErrorMessage);
+            var error = result.ErrorMessage ?? "Unknown error";
+            if (error.Contains("Notification not found", StringComparison.Ordinal)) 
+                return NotFound(error);
+                
+            if (error.Contains("Unauthorized", StringComparison.Ordinal)) 
+                return Unauthorized(error);
+            
             return BadRequest(result.ErrorMessage);
         }
         

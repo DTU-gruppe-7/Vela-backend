@@ -1,5 +1,5 @@
 using System.Runtime.InteropServices.ComTypes;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
 
 namespace Vela.Application.Interfaces.Repository;
 

@@ -3,13 +3,16 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Vela.API.Configuration;
 using Vela.API.Notification;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.External;
 using Vela.Application.Interfaces.Service;
 using Vela.Application.Interfaces.Service.Notification;
+using Vela.Application.Interfaces.Validation;
 using Vela.Application.Services;
 using Vela.Application.Services.Notification;
+using Vela.Application.Validation;
 using Vela.Infrastructure.Data;
 using Vela.Infrastructure.Repositories;
 using Vela.Infrastructure.External.RecipeImport;
@@ -64,7 +67,7 @@ public static class InfrastructureServiceExtensions
                     {
                         var accessToken = context.Request.Query["access_token"];
                         var path = context.HttpContext.Request.Path;
-                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/api/hubs/notifications"))
                         {
                             context.Token = accessToken;
                         }
@@ -86,16 +89,22 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IGroupRepository, GroupRepository>();
         services.AddScoped<IGroupInviteRepository, GroupInviteRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         //Services
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IRecipeService, RecipeService>();
         services.AddScoped<ILikeService, LikeService>();
+        services.AddSingleton<IShoppingListIngredientExclusionProvider, ShoppingListIngredientExclusionProvider>();
         services.AddScoped<IShoppingListService, ShoppingListService>();
         services.AddScoped<IMealPlanService, MealPlanService>();
+        services.AddScoped<IGroupAuthorizationService, GroupAuthorizationService>();
         services.AddScoped<IGroupService, GroupService>();
         services.AddScoped<IGroupInviteService, GroupInviteService>();
         services.AddScoped<INotificationService, NotificationService>();
+
+        // Validation Services
+        services.AddScoped<IIngredientValidator, IngredientValidator>();
 
         // Import Service
         services.AddScoped<IRecipeImportService, JsonRecipeImportService>();

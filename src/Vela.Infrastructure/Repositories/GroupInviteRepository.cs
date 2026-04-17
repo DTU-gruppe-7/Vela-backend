@@ -1,13 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
 using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
 
 public class GroupInviteRepository(AppDbContext context) : Repository<GroupInvite>(context), IGroupInviteRepository
 {
-    public override Task<GroupInvite?> GetByUuidAsync(Guid uuid)
+    public override Task<GroupInvite?> GetByUuidAsync(Guid? uuid)
     {
         throw new NotSupportedException("GroupInvite uses composite key (UserId, GroupId). User GetGroupInviteAsync instead.");
     }

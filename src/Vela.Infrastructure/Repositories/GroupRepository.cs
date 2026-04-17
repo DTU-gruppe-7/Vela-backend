@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
+using Vela.Domain.Entities.Group;
 using Vela.Domain.Entities;
 using Vela.Infrastructure.Data;
 
@@ -28,4 +29,5 @@ public class GroupRepository(AppDbContext context) : Repository<Group>(context),
             .Where(g => g.GroupId == groupId)
             .ToListAsync();
     }
+
 }

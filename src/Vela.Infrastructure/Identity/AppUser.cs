@@ -14,13 +14,16 @@ public class AppUser : IdentityUser
     public DateOnly? DateOfBirth { get; set; }
     
     // App-specifikke indstillinger
-    public int DefaultPortions { get; set; } = 2; // Standard antal personer de handler ind til
+    public int DefaultPortions { get; set; } = 1; // Standard antal personer de handler ind til
     public string? PushNotificationToken { get; set; } // Til fremtidige Tinder-matches
+    // Kostpræferencer
+    public bool AvoidGluten { get; set; }
+    public bool AvoidLactose { get; set; }
+    public bool AvoidNuts { get; set; }
+    public bool IsVegan { get; set; }
     
     // Audit og administration
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public bool IsActive { get; set; } = true;
     
-    // Navigation properties
-    public List<MealPlan> MealPlans { get; set; } = new();
 }

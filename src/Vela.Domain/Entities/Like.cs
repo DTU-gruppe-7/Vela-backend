@@ -1,4 +1,5 @@
 ﻿using Vela.Domain.Enums;
+using Vela.Domain.Entities.Recipes;
 
 namespace Vela.Domain.Entities;
 

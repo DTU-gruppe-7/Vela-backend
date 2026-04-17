@@ -1,4 +1,4 @@
-namespace Vela.Domain.Entities;
+namespace Vela.Domain.Entities.Group;
 
 public class Group
 {

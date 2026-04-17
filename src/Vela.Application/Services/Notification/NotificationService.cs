@@ -18,7 +18,7 @@ public class NotificationService(INotificationRepository notificationRepository)
         {
             Id = n.Id,
             Title = n.Title,
-            Message = n.Message,
+            Message = n.Message ?? string.Empty,
             Type = n.NotificationType.ToString(),
             RelatedEntityId = n.RelatedEntityId,
             IsRead = n.IsRead,

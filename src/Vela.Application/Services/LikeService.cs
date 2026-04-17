@@ -4,6 +4,7 @@ using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.Service;
 using Vela.Application.Interfaces.Service.Notification;
 using Vela.Domain.Entities;
+using Vela.Domain.Entities.Group;
 using Vela.Domain.Enums;
 
 namespace Vela.Application.Services;
@@ -52,7 +53,7 @@ public class LikeService(
     {
         var group = await _groupRepository.GetGroupWithMembersAsync(groupId);
         if (group == null)
-            Result.Fail("Group not found");
+            return;
         
         var match = new Match
         {

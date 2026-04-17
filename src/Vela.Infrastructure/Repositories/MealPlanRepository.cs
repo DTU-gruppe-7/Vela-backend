@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Vela.Application.Interfaces.Repository;
-using Vela.Domain.Entities;
+using Vela.Domain.Entities.MealPlan;
 using Vela.Infrastructure.Data;
 
 namespace Vela.Infrastructure.Repositories;
@@ -19,16 +19,12 @@ public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(con
     public async Task<MealPlan?> GetByUserIdAsync(string userId)
     {
         return await _dbSet
-            .Include(mp => mp.Entries)
-            .ThenInclude(mpe => mpe.Recipe)
             .SingleOrDefaultAsync(mp => mp.UserId == userId);
     }
     
     public async Task<MealPlan?> GetByGroupIdAsync(Guid groupId)
     {
         return await _dbSet
-            .Include(mp => mp.Entries)
-            .ThenInclude(mpe => mpe.Recipe)
             .SingleOrDefaultAsync(mp => mp.GroupId == groupId);
     }
 
@@ -53,14 +49,25 @@ public class MealPlanRepository(AppDbContext context) : Repository<MealPlan>(con
             .FirstOrDefaultAsync(mpe => mpe.Id == entryId);
     }
 
-    public async Task<MealPlan?> GetByIdWithEntriesAsync(Guid id)
+    public async Task<MealPlan?> GetByIdWithEntriesByDateRangeAsync(Guid id, DateOnly startDate, DateOnly endDate)
     {
         return await _context.MealPlans
             .AsSplitQuery()
-            .Include(mp => mp.Entries)
+            .Include(mp => mp.Entries.Where(
+                e => e.Date >= startDate && e.Date <= endDate))
             .ThenInclude(e => e.Recipe)
             .ThenInclude(r => r.Ingredients)
             .ThenInclude(ri => ri.Ingredient)
             .FirstOrDefaultAsync(mp => mp.Id == id);
+    }
+    
+    public async Task<IEnumerable<MealPlan>> GetAllGroupMealPlans(IEnumerable<Guid> groupIds)
+    {
+        var  groupIdList = groupIds.ToList();
+        if (!groupIdList.Any()) return Enumerable.Empty<MealPlan>();
+        
+        return await _context.MealPlans
+            .Where(mp => mp.GroupId.HasValue && groupIdList.Contains(mp.GroupId.Value))
+            .ToListAsync();
     }
 }
