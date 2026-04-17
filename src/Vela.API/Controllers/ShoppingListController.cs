@@ -125,6 +125,17 @@ public class ShoppingListController(IShoppingListService shoppingListService) : 
             return BadRequest(result.ErrorMessage);
 
         return Ok(result);
-            
+    }
+
+    [HttpPatch("{id}/items/{itemId}/assign")]
+    public async Task<ActionResult> AssignItem(Guid id, Guid itemId, [FromBody] AssignItemRequestDto dto)
+    {
+        // Vi kalder servicen for at opdatere tildelingen i databasen
+        var result = await _shoppingListService.AssignItemToUserAsync(itemId, dto.UserId);
+    
+        if (!result.Success)
+            return BadRequest(new { message = result.ErrorMessage });
+
+        return Ok(new { message = "Varen er nu tildelt brugeren" });
     }
 }
