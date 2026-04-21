@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.ShoppingList;
@@ -6,6 +7,7 @@ using Vela.Application.Interfaces.Repository;
 namespace Vela.API.Controllers;
 
 [Authorize]
+[ApiVersion("1.0")]
 public class IngredientsController(IIngredientRepository ingredientRepository) : BaseApiController
 {
     [HttpGet("search")]

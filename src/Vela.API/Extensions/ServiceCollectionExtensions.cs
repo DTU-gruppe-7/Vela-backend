@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using AspNetCoreRateLimit;
 using Microsoft.OpenApi;
+using Asp.Versioning;
 
 namespace Vela.API.Extensions;
 
@@ -14,6 +15,18 @@ public static class ServiceCollectionExtensions
                 options.JsonSerializerOptions.Converters.Add(
                     new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
             });
+        services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
 
         services.AddEndpointsApiExplorer();
         

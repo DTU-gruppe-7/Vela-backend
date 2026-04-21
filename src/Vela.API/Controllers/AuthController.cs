@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs.Auth;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
 
+[ApiVersion("1.0")]
 public class AuthController(IAuthService authService, IShoppingListService shoppingListService, IMealPlanService mealPlanService) : BaseApiController
 {
     private readonly IAuthService _authService =  authService;
