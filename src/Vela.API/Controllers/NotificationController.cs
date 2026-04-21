@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.Interfaces.Service;
@@ -6,6 +7,7 @@ using Vela.Application.Interfaces.Service.Notification;
 namespace Vela.API.Controllers;
 
 [Authorize]
+[ApiVersion("1.0")]
 public class NotificationsController(INotificationService notificationService) : BaseApiController
 {
     private readonly INotificationService _notificationService = notificationService;

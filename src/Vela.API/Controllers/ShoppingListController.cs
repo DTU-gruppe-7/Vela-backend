@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.Common;
 using Vela.Application.DTOs.ShoppingList;
@@ -7,6 +8,7 @@ using Vela.Application.Interfaces.Service;
 namespace Vela.API.Controllers;
 
 [Authorize]
+[ApiVersion("1.0")]
 public class ShoppingListController(IShoppingListService shoppingListService) : BaseApiController
 {
     private readonly IShoppingListService _shoppingListService = shoppingListService;

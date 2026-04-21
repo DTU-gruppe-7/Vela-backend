@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Vela.Application.DTOs;
@@ -6,6 +7,7 @@ using Vela.Application.Interfaces.Service;
 namespace Vela.API.Controllers
 {
     [Authorize]
+    [ApiVersion("1.0")]
     public class SwipeController(ILikeService likeService) : BaseApiController
     {
         private readonly ILikeService _likeService = likeService;

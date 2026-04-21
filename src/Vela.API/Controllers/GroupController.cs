@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +10,7 @@ using Vela.Infrastructure.Identity;
 namespace Vela.API.Controllers;
 
 [Authorize]
+[ApiVersion("1.0")]
 public class GroupController(
     IGroupService groupService,
     IGroupInviteService groupInviteService,

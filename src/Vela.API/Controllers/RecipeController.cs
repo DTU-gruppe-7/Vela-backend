@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Vela.Application.DTOs;
 using Vela.Application.DTOs.Auth;
@@ -8,6 +9,7 @@ using Vela.Domain.Enums;
 namespace Vela.API.Controllers
 {
 	[Authorize]
+	[ApiVersion("1.0")]
 	public class RecipeController(IRecipeService recipeService, IAuthService authService) : BaseApiController
 	{
 		private readonly IRecipeService _recipeService = recipeService;
