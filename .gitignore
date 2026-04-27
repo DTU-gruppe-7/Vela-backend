@@ -494,3 +494,7 @@ secrets.json
 
 AGENTS.md
 CLAUDE.md
+
+# Test Coverage
+coveragereport/
+TestResults/
