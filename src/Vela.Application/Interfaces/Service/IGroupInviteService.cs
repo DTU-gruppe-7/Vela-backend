@@ -5,7 +5,7 @@ namespace Vela.Application.Interfaces.Service;
 
 public interface IGroupInviteService
 {
-    Task<Result> SendInviteAsync(string userId, Guid groupId, string callerUserId);
+    Task<Result> SendInviteAsync(string email, Guid groupId, string callerUserId);
     Task<Result> AcceptInviteAsync(string userId, Guid groupId);
     Task<Result> DeclineInviteAsync(string userId, Guid groupId);
     Task<Result<IEnumerable<GroupInviteDto>>> GetInvitesByUserIdAsync(string userId);

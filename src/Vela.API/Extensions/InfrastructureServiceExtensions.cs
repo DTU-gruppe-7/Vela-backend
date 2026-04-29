@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Vela.API.Configuration;
+using Vela.Application.Configuration;
 using Vela.API.Notification;
 using Vela.Application.Interfaces.Repository;
 using Vela.Application.Interfaces.External;
@@ -24,6 +25,8 @@ public static class InfrastructureServiceExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+
         //Database
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("VelaDbConnection")));
@@ -93,6 +96,8 @@ public static class InfrastructureServiceExtensions
 
         //Services
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
+        services.AddScoped<IUserOnboardingService, UserOnboardingService>();
         services.AddScoped<IRecipeService, RecipeService>();
         services.AddScoped<ILikeService, LikeService>();
         services.AddSingleton<IShoppingListIngredientExclusionProvider, ShoppingListIngredientExclusionProvider>();

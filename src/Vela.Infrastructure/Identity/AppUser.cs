@@ -6,7 +6,7 @@ namespace Vela.Infrastructure.Identity;
 public class AppUser : IdentityUser
 {
     public string? RefreshToken { get; set; }
-    public DateTime RefreshTokenExpiryTime { get; set; }
+    public DateTimeOffset RefreshTokenExpiryTime { get; set; }
     
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;

@@ -1,113 +1,146 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Vela.Application.Configuration;
 using Vela.Application.DTOs.Auth;
 using Vela.Application.Interfaces.Service;
 
 namespace Vela.API.Controllers;
 
 [ApiVersion("1.0")]
-public class AuthController(IAuthService authService, IShoppingListService shoppingListService, IMealPlanService mealPlanService) : BaseApiController
+public class AuthController(
+	IAuthService authService,
+	IUserOnboardingService userOnboardingService,
+	IUserProfileService userProfileService,
+	IWebHostEnvironment environment,
+	IOptions<JwtSettings> jwtSettings) : BaseApiController
 {
-    private readonly IAuthService _authService =  authService;
-    private readonly IShoppingListService _shoppingListService = shoppingListService;
-    private readonly IMealPlanService _mealPlanService = mealPlanService;
+	private const string RefreshTokenCookieName = "refreshToken";
+	private const string RefreshTokenCookiePath = "/api/v1/Auth";
 
-     [HttpPost("register")]
-     public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerRequestDto)
-     {
-         var result = await _authService.RegisterAsync(registerRequestDto);
-         if (!result.Success)
-         {
-             return BadRequest(new { message = result.ErrorMessage });
-         }
+	private readonly IAuthService _authService = authService;
+	private readonly IUserOnboardingService _userOnboardingService = userOnboardingService;
+	private readonly IUserProfileService _userProfileService = userProfileService;
+	private readonly IWebHostEnvironment _environment = environment;
+	private readonly JwtSettings _jwtSettings = jwtSettings.Value;
 
-         var userId = result.Data?.UserId;
-         if (string.IsNullOrEmpty(userId))
-         {
-             return BadRequest("Failed to retrieve user ID after registration");
-         }
+	[HttpPost("register")]
+	public async Task<ActionResult<AuthLoginResponseDto>> Register([FromBody] RegisterRequestDto registerRequestDto)
+	{
+		var result = await _userOnboardingService.RegisterAsync(registerRequestDto);
+		if (!result.Success)
+			return BadRequest(new { message = result.ErrorMessage });
 
-         var shoppingListResult = await _shoppingListService.CreateShoppingListAsync(userId, null, "Min indkøbsliste");
+		AppendRefreshTokenCookie(result.Data!.RefreshToken);
+		return Ok(MapLoginResponse(result.Data!));
+	}
 
-        if (!shoppingListResult.Success)
-        {
-            await _authService.DeleteUserAsync(userId);
-            return BadRequest(shoppingListResult.ErrorMessage);
-        }
-        
-        var mealPlanResult = await _mealPlanService.CreateMealPlanAsync(userId, null, "Min madplan");
-        if (!mealPlanResult.Success)
-        {
-            await _authService.DeleteUserAsync(userId);
-            return BadRequest(mealPlanResult.ErrorMessage);
-        }
-        
-        return Ok(result.Data);
-    }
+	[HttpPost("login")]
+	public async Task<ActionResult<AuthLoginResponseDto>> Login([FromBody] LoginRequestDto loginRequestDto)
+	{
+		var result = await _authService.LoginAsync(loginRequestDto);
+		if (!result.Success)
+			return Unauthorized(result.ErrorMessage);
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto loginRequestDto)
-    {
-        var result = await _authService.LoginAsync(loginRequestDto);
-        if (!result.Success)
-        {
-            return Unauthorized(result.ErrorMessage); // 401 Unauthorized er bedst til mislykket login
-        }
-        return Ok(result.Data);
-    }
+		AppendRefreshTokenCookie(result.Data!.RefreshToken);
+		return Ok(MapLoginResponse(result.Data!));
+	}
 
-    [HttpPost("refresh-token")]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto refreshTokenRequestDto)
-    {
-        var result = await _authService.RefreshTokenAsync(refreshTokenRequestDto);
-        if (!result.Success)
-        {
-            return Unauthorized(result.ErrorMessage); 
-        }
+	[HttpPost("refresh")]
+	public async Task<ActionResult<AuthLoginResponseDto>> RefreshToken([FromBody] RefreshTokenRequestDto refreshTokenRequestDto)
+	{
+		var refreshToken = Request.Cookies[RefreshTokenCookieName];
+		if (string.IsNullOrWhiteSpace(refreshToken))
+			return Unauthorized("Missing refresh token cookie.");
 
-        return Ok(result.Data);
-    }
+		var result = await _authService.RefreshTokenAsync(refreshTokenRequestDto.AccessToken, refreshToken);
+		if (!result.Success)
+			return Unauthorized(result.ErrorMessage);
 
-    [Authorize]
-    [HttpPost("logout")]
-    public async Task<IActionResult> Logout()
-    {
-        var userId = GetCurrentUserId();
-        
-        var result = await _authService.LogoutAsync(userId);
+		AppendRefreshTokenCookie(result.Data!.RefreshToken);
+		return Ok(MapLoginResponse(result.Data!));
+	}
 
-        if (!result.Success)
-        {
-            return BadRequest(result.ErrorMessage);
-        }
-        
-        return NoContent();
-    }
+	[Authorize]
+	[HttpPost("logout")]
+	public async Task<IActionResult> Logout()
+	{
+		var userId = GetCurrentUserId();
+		var result = await _authService.LogoutAsync(userId);
 
-    [Authorize]
-    [HttpGet("preferences")]
-    public async Task<IActionResult> GetDietaryPreferences()
-    {
-        var userId = GetCurrentUserId();
-        var result = await _authService.GetDietaryPreferencesAsync(userId);
+		if (!result.Success)
+			return BadRequest(result.ErrorMessage);
 
-        if (!result.Success)
-            return NotFound(new { message = result.ErrorMessage });
+		DeleteRefreshTokenCookie();
+		return NoContent();
+	}
 
-        return Ok(result.Data);
-    }
+	[Authorize]
+	[HttpGet("preferences")]
+	public async Task<IActionResult> GetDietaryPreferences()
+	{
+		var userId = GetCurrentUserId();
+		var result = await _userProfileService.GetDietaryPreferencesAsync(userId);
 
-    [Authorize]
-    [HttpPatch("preferences")]
-    public async Task<IActionResult> UpdateDietaryPreferences([FromBody] UpdateUserDietaryPreferencesRequestDto requestDto)
-    {
-        var userId = GetCurrentUserId();
-        var result = await _authService.UpdateDietaryPreferencesAsync(userId, requestDto);
+		if (!result.Success)
+			return NotFound(new { message = result.ErrorMessage });
 
-        if (!result.Success)
-            return BadRequest(new { message = result.ErrorMessage });
+		return Ok(result.Data);
+	}
 
-        return Ok(result.Data);
-    }
-} 
+	[Authorize]
+	[HttpPatch("preferences")]
+	public async Task<IActionResult> UpdateDietaryPreferences([FromBody] UpdateUserDietaryPreferencesRequestDto requestDto)
+	{
+		var userId = GetCurrentUserId();
+		var result = await _userProfileService.UpdateDietaryPreferencesAsync(userId, requestDto);
+
+		if (!result.Success)
+			return BadRequest(new { message = result.ErrorMessage });
+
+		return Ok(result.Data);
+	}
+
+	private void AppendRefreshTokenCookie(string refreshToken)
+	{
+		Response.Cookies.Append(
+			RefreshTokenCookieName,
+			refreshToken,
+			new CookieOptions
+			{
+				HttpOnly = true,
+				Secure = !_environment.IsDevelopment(),
+				SameSite = _environment.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+				Path = RefreshTokenCookiePath,
+				Expires = DateTimeOffset.UtcNow.AddDays(_jwtSettings.RefreshTokenValidityInDays),
+				IsEssential = true
+			});
+	}
+
+	private void DeleteRefreshTokenCookie()
+	{
+		Response.Cookies.Delete(
+			RefreshTokenCookieName,
+			new CookieOptions
+			{
+				HttpOnly = true,
+				Secure = !_environment.IsDevelopment(),
+				SameSite = _environment.IsDevelopment() ? SameSiteMode.Lax : SameSiteMode.None,
+				Path = RefreshTokenCookiePath
+			});
+	}
+
+	private static AuthLoginResponseDto MapLoginResponse(AuthResponseDto authResponseDto)
+	{
+		return new AuthLoginResponseDto(
+			authResponseDto.Token,
+			new AuthUserDto(
+				authResponseDto.UserId,
+				authResponseDto.Email,
+				authResponseDto.FirstName,
+				authResponseDto.LastName,
+				authResponseDto.ProfilePictureUrl,
+				authResponseDto.DateOfBirth));
+	}
+}

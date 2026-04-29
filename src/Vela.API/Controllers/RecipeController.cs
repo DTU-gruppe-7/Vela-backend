@@ -10,10 +10,10 @@ namespace Vela.API.Controllers
 {
 	[Authorize]
 	[ApiVersion("1.0")]
-	public class RecipeController(IRecipeService recipeService, IAuthService authService) : BaseApiController
+	public class RecipeController(IRecipeService recipeService, IUserProfileService userProfileService) : BaseApiController
 	{
 		private readonly IRecipeService _recipeService = recipeService;
-		private readonly IAuthService _authService = authService;
+		private readonly IUserProfileService _userProfileService = userProfileService;
 
 	[HttpGet]
 	public async Task<IActionResult> GetAll([FromQuery] string? exclude = null)
@@ -21,7 +21,7 @@ namespace Vela.API.Controllers
 		if (!TryParseExcludedAllergens(exclude, out var excludedAllergens, out var errorResult))
 			return BadRequest(new { message = errorResult });
 
-		var dietaryPreferencesResult = await _authService.GetDietaryPreferencesAsync(GetCurrentUserId());
+		var dietaryPreferencesResult = await _userProfileService.GetDietaryPreferencesAsync(GetCurrentUserId());
 		if (!dietaryPreferencesResult.Success)
 			return NotFound(new { message = dietaryPreferencesResult.ErrorMessage });
 
@@ -49,7 +49,7 @@ namespace Vela.API.Controllers
 		if (!TryParseExcludedAllergens(exclude, out var excludedAllergens, out var errorResult))
 			return BadRequest(new { message = errorResult });
 
-		var dietaryPreferencesResult = await _authService.GetDietaryPreferencesAsync(GetCurrentUserId());
+		var dietaryPreferencesResult = await _userProfileService.GetDietaryPreferencesAsync(GetCurrentUserId());
 		if (!dietaryPreferencesResult.Success)
 			return NotFound(new { message = dietaryPreferencesResult.ErrorMessage });
 
