@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Vela.API\Vela.API.csproj" />
     <ProjectReference Include="..\..\src\Vela.Application\Vela.Application.csproj" />
     <ProjectReference Include="..\..\src\Vela.Domain\Vela.Domain.csproj" />
   </ItemGroup>

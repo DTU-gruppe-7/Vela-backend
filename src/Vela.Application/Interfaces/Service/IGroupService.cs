@@ -6,7 +6,6 @@ namespace Vela.Application.Interfaces.Service;
 
 public interface IGroupService
 {
-    Task<Result<GroupDto>> CreateGroupAsync(string userId, CreateGroupRequest request);
     Task<Result<GroupDto>> CreateGroupWithResourcesAsync(string userId, CreateGroupRequest request);
     Task<Result<GroupDto>> GetGroupAsync(Guid groupId, string callerUserId);
     Task<Result<IEnumerable<GroupDto>>> GetGroupsByUserIdAsync(string userId);

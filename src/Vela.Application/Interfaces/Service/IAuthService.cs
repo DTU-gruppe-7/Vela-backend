@@ -7,9 +7,7 @@ public interface IAuthService
 {
     Task<Result<AuthResponseDto>> RegisterAsync(RegisterRequestDto requestDto);
     Task<Result<AuthResponseDto>> LoginAsync(LoginRequestDto requestDto);
-    Task<Result<AuthResponseDto>> RefreshTokenAsync(RefreshTokenRequestDto requestDto);
+    Task<Result<AuthResponseDto>> RefreshTokenAsync(string token, string refreshToken);
     Task<Result> DeleteUserAsync(string userId);
     Task<Result<bool>> LogoutAsync(string userId);
-    Task<Result<UserDietaryPreferencesDto>> GetDietaryPreferencesAsync(string userId);
-    Task<Result<UserDietaryPreferencesDto>> UpdateDietaryPreferencesAsync(string userId, UpdateUserDietaryPreferencesRequestDto requestDto);
 }

@@ -7,7 +7,7 @@ public class MealPlanEntryDto
     public Guid RecipeId { get; set; }
     public required DateOnly Date { get; set; }
     public required string MealType { get; set; }
-    public int Servings { get; set; }
+    public int? Servings { get; set; }
     public DateTimeOffset AddedAt { get; set; }
     public RecipeSummaryDto? Recipe { get; set; }
     public bool AddedToShoppingList { get; set; }

@@ -15,4 +15,12 @@ public class UserRepository(AppDbContext context) : IUserRepository
 				u => u.Id,
 				u => (u.FirstName, u.LastName, u.Email ?? string.Empty));
 	}
+
+	public async Task<string?> FindUserIdByEmailAsync(string email)
+	{
+		return await context.Users
+			.Where(u => u.Email == email)
+			.Select(u => u.Id)
+			.FirstOrDefaultAsync();
+	}
 }
