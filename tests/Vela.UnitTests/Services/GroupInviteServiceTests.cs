@@ -17,6 +17,7 @@ public class GroupInviteServiceTests
     private readonly Mock<IGroupService> _groupService = new();
     private readonly Mock<IGroupAuthorizationService> _groupAuth = new();
     private readonly Mock<INotificationDispatcher> _notificationDispatcher = new();
+    private readonly Mock<IUserRepository> _userRepo = new();
     private readonly GroupInviteService _sut;
 
     public GroupInviteServiceTests()
@@ -26,15 +27,17 @@ public class GroupInviteServiceTests
             _groupRepo.Object,
             _groupService.Object,
             _groupAuth.Object,
-            _notificationDispatcher.Object);
+            _notificationDispatcher.Object,
+            _userRepo.Object);
     }
 
     [Fact]
     public async Task SendInviteAsync_WhenGroupNotFound_ReturnsFail()
     {
+        _userRepo.Setup(x => x.FindUserIdByEmailAsync("test@test.com")).ReturnsAsync("user-2");
         _groupRepo.Setup(x => x.GetGroupWithMembersAsync(It.IsAny<Guid>())).ReturnsAsync((Group?)null);
 
-        var result = await _sut.SendInviteAsync("user-2", Guid.NewGuid(), "caller");
+        var result = await _sut.SendInviteAsync("test@test.com", Guid.NewGuid(), "caller");
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Contain("not found");
@@ -43,11 +46,12 @@ public class GroupInviteServiceTests
     [Fact]
     public async Task SendInviteAsync_WhenUnauthorized_ReturnsFail()
     {
+        _userRepo.Setup(x => x.FindUserIdByEmailAsync("test@test.com")).ReturnsAsync("user-2");
         var group = new Group { Id = Guid.NewGuid(), Name = "Test" };
         _groupRepo.Setup(x => x.GetGroupWithMembersAsync(group.Id)).ReturnsAsync(group);
         _groupAuth.Setup(x => x.AuthorizeSendInvite(group, "caller")).Returns(Result.Fail("Unauthorized", ResultErrorType.Forbidden));
 
-        var result = await _sut.SendInviteAsync("user-2", group.Id, "caller");
+        var result = await _sut.SendInviteAsync("test@test.com", group.Id, "caller");
 
         result.Success.Should().BeFalse();
         result.ErrorType.Should().Be(ResultErrorType.Forbidden);
@@ -56,12 +60,13 @@ public class GroupInviteServiceTests
     [Fact]
     public async Task SendInviteAsync_WhenInviteExists_ReturnsFail()
     {
+        _userRepo.Setup(x => x.FindUserIdByEmailAsync("test@test.com")).ReturnsAsync("user-2");
         var group = new Group { Id = Guid.NewGuid(), Name = "Test" };
         _groupRepo.Setup(x => x.GetGroupWithMembersAsync(group.Id)).ReturnsAsync(group);
         _groupAuth.Setup(x => x.AuthorizeSendInvite(group, "caller")).Returns(Result.Ok());
         _inviteRepo.Setup(x => x.GetGroupInviteAsync("user-2", group.Id)).ReturnsAsync(new GroupInvite { GroupId = group.Id, UserId = "user-2" });
 
-        var result = await _sut.SendInviteAsync("user-2", group.Id, "caller");
+        var result = await _sut.SendInviteAsync("test@test.com", group.Id, "caller");
 
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Contain("allerede sendt en invitation");
@@ -70,12 +75,13 @@ public class GroupInviteServiceTests
     [Fact]
     public async Task SendInviteAsync_WhenAuthorizedAndNew_SendsInviteAndNotification()
     {
+        _userRepo.Setup(x => x.FindUserIdByEmailAsync("test@test.com")).ReturnsAsync("user-2");
         var group = new Group { Id = Guid.NewGuid(), Name = "Test Group" };
         _groupRepo.Setup(x => x.GetGroupWithMembersAsync(group.Id)).ReturnsAsync(group);
         _groupAuth.Setup(x => x.AuthorizeSendInvite(group, "caller")).Returns(Result.Ok());
         _inviteRepo.Setup(x => x.GetGroupInviteAsync("user-2", group.Id)).ReturnsAsync((GroupInvite?)null);
 
-        var result = await _sut.SendInviteAsync("user-2", group.Id, "caller");
+        var result = await _sut.SendInviteAsync("test@test.com", group.Id, "caller");
 
         result.Success.Should().BeTrue();
         _inviteRepo.Verify(x => x.AddAsync(It.Is<GroupInvite>(i => i.UserId == "user-2" && i.GroupId == group.Id)), Times.Once);

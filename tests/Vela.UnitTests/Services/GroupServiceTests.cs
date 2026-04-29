@@ -15,8 +15,8 @@ namespace Vela.UnitTests.Services;
 public class GroupServiceTests
 {
     private readonly Mock<IGroupRepository> _groupRepo = new();
-    private readonly Mock<IMealPlanRepository> _mealPlanRepo = new();
-    private readonly Mock<IShoppingListRepository> _shoppingListRepo = new();
+    private readonly Mock<IMealPlanService> _mealPlanService = new();
+    private readonly Mock<IShoppingListService> _shoppingListService = new();
     private readonly Mock<ILikeRepository> _likeRepo = new();
     private readonly Mock<ILikeService> _likeService = new();
     private readonly Mock<IUserRepository> _userRepo = new();
@@ -27,8 +27,8 @@ public class GroupServiceTests
     {
         _sut = new GroupService(
             _groupRepo.Object,
-            _mealPlanRepo.Object,
-            _shoppingListRepo.Object,
+            _mealPlanService.Object,
+            _shoppingListService.Object,
             _likeRepo.Object,
             _likeService.Object,
             _userRepo.Object,
@@ -53,8 +53,8 @@ public class GroupServiceTests
         result.Data.Members.First().Role.Should().Be(GroupRole.Owner);
 
         _groupRepo.Verify(x => x.AddAsync(It.Is<Group>(g => g.Name == "Test Group")), Times.Once);
-        _mealPlanRepo.Verify(x => x.AddAsync(It.Is<MealPlan>(m => m.Name == "Test Group Meal Plan")), Times.Once);
-        _shoppingListRepo.Verify(x => x.AddAsync(It.Is<ShoppingList>(s => s.Name == "Test Group Shopping List")), Times.Once);
+        _mealPlanService.Verify(x => x.CreateMealPlanAsync(null, It.IsAny<Guid>(), "Test Group Meal Plan"), Times.Once);
+        _shoppingListService.Verify(x => x.CreateShoppingListAsync(null, It.IsAny<Guid>(), "Test Group Shopping List"), Times.Once);
         _groupRepo.Verify(x => x.SaveChangesAsync(), Times.Once);
         _likeService.Verify(x => x.RecalculateGroupMatchesAsync(It.IsAny<Group>()), Times.Once);
     }
